@@ -93,6 +93,33 @@ services:
       elasticsearch:
         condition: service_healthy
 
+  # ============================== Application ==============================
+  # Spring Boot app, containerised. `docker compose up app` builds the image
+  # from the Dockerfile and brings up Postgres + ELK first.
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flightlog/app:latest
+    container_name: flightlog-app
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/flightlog
+      DB_USER: flightlog
+      DB_PASSWORD: flightlog
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: "5044"
+      LOGSTASH_ENABLED: "true"
+      ENV: docker
+      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+
 volumes:
   flightlog-pgdata:
   flightlog-pgadmin:

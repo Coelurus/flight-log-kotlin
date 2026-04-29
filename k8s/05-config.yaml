@@ -1,0 +1,26 @@
+# =====================================================================
+# Database secrets / config. Replace these values for non-dev clusters
+# (e.g. via SealedSecrets, External Secrets, or Helm values).
+# =====================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flightlog-db
+  namespace: flightlog
+type: Opaque
+stringData:
+  POSTGRES_DB: flightlog
+  POSTGRES_USER: flightlog
+  POSTGRES_PASSWORD: flightlog
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flightlog-app-config
+  namespace: flightlog
+data:
+  ENV: "k8s"
+  DB_URL: "jdbc:postgresql://postgres:5432/flightlog"
+  LOGSTASH_HOST: "logstash"
+  LOGSTASH_PORT: "5044"
+  LOGSTASH_ENABLED: "true"

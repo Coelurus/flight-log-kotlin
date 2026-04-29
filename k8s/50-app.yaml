@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flightlog
+  namespace: flightlog
+  labels: { app: flightlog }
+spec:
+  replicas: 1            # Bump after wiring sticky sessions or moving session
+                         # store out of in-memory; default config is single-node.
+  selector:
+    matchLabels: { app: flightlog }
+  template:
+    metadata:
+      labels: { app: flightlog }
+    spec:
+      containers:
+        - name: flightlog
+          image: flightlog/app:latest   # build & push: docker build -t flightlog/app:latest .
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { containerPort: 8080, name: http }
+          envFrom:
+            - configMapRef: { name: flightlog-app-config }
+          env:
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: flightlog-db, key: POSTGRES_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: flightlog-db, key: POSTGRES_PASSWORD } }
+            - name: JAVA_OPTS
+              value: "-XX:MaxRAMPercentage=75.0"
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 24
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "200m", memory: "512Mi" }
+            limits:   { cpu: "2",    memory: "1Gi" }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flightlog
+  namespace: flightlog
+spec:
+  selector: { app: flightlog }
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  type: ClusterIP
+---
+# Optional ingress - remove or adapt to your controller (NGINX/Traefik/...).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flightlog
+  namespace: flightlog
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: flightlog.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flightlog
+                port: { number: 80 }
+    - host: kibana.flightlog.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana
+                port: { number: 5601 }
