@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - flightlog-pgdata:/var/lib/postgresql/data
+      - flightlog-pgdata:/var/lib/postgresql/data:z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U flightlog -d flightlog"]
       interval: 5s
@@ -32,7 +32,7 @@ services:
     ports:
       - "5050:80"
     volumes:
-      - flightlog-pgadmin:/var/lib/pgadmin
+      - flightlog-pgadmin:/var/lib/pgadmin:z
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - flightlog-esdata:/usr/share/elasticsearch/data
+      - flightlog-esdata:/usr/share/elasticsearch/data:z
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s
@@ -74,7 +74,7 @@ services:
     ports:
       - "5044:5044"   # app -> logstash (json over TCP)
     volumes:
-      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
     depends_on:
       elasticsearch:
         condition: service_healthy

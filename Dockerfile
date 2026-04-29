@@ -9,7 +9,7 @@ WORKDIR /workspace
 # Cache Gradle dependencies first so source-only changes don't refetch.
 COPY gradle gradle
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
-RUN ./gradlew --no-daemon -q help >/dev/null 2>&1 || true
+RUN chmod +x ./gradlew && ./gradlew --no-daemon -q help >/dev/null 2>&1 || true
 
 COPY src src
 RUN ./gradlew --no-daemon clean bootJar -x test
@@ -20,11 +20,13 @@ WORKDIR /app
 
 # Non-root user for OWASP / k8s best practice. UID 1001 because the
 # Temurin base image already ships a user with UID 1000.
-RUN useradd -r -u 1001 -m flightlog
+RUN useradd -r -u 1001 -m flightlog \
+    && mkdir -p /app/logs \
+    && chown -R flightlog:flightlog /app
 USER flightlog
 
 # Layered jar would be nicer but a single fat-jar is enough here.
-COPY --from=builder /workspace/build/libs/*.jar /app/app.jar
+COPY --from=builder --chown=flightlog:flightlog /workspace/build/libs/*.jar /app/app.jar
 
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
 EXPOSE 8080
