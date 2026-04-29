@@ -6,8 +6,8 @@
  *  - Offline POST replay via IndexedDB outbox
  */
 
-const CACHE_NAME = 'flightlog-shell-v4';
-const RUNTIME_CACHE = 'flightlog-runtime-v4';
+const CACHE_NAME = 'flightlog-shell-v5';
+const RUNTIME_CACHE = 'flightlog-runtime-v5';
 
 // Don't pre-cache HTML pages — we always prefer network for those.
 const APP_SHELL = [

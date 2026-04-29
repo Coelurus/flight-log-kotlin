@@ -38,7 +38,20 @@ interface PersonJpa : JpaRepository<Person, Long> {
     fun findFirstByLastNameIgnoreCase(lastName: String): Person?
 }
 
-interface FlightJpa : JpaRepository<Flight, Long>, JpaSpecificationExecutor<Flight>
+interface FlightJpa : JpaRepository<Flight, Long>, JpaSpecificationExecutor<Flight> {
+    @Query(
+        """
+        select f from Flight f
+            left join fetch f.airplane a
+            left join fetch a.clubAirplane ca
+            left join fetch ca.airplaneType
+            left join fetch f.pilot
+        where f.landingTime is null and f.createdBy = :user
+        order by f.takeoffTime desc
+        """
+    )
+    fun findOpenByCreator(@Param("user") user: String): List<Flight>
+}
 
 interface FlightStartJpa : JpaRepository<FlightStart, Long> {
     @Query(

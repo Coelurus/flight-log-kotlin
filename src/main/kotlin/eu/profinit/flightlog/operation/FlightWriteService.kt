@@ -40,6 +40,17 @@ class FlightWriteService(
     @Transactional
     fun create(req: CreateFlightRequest): CreateFlightResponse {
         validateConditional(req)
+        val user = currentUser()
+        if (user != null) {
+            val open = flights.findOpenByCreator(user)
+            if (open.isNotEmpty()) {
+                val first = open.first()
+                throw BusinessRuleException(
+                    "Máte rozletěný let č. ${first.id}; než založíte nový, je nutné jej ukončit přistáním.",
+                    null,
+                )
+            }
+        }
         val takeoff = parseDateTime(req.date, req.takeoffTime)
         val landing = req.landingTime?.let { parseDateTime(req.date, it) }
         if (landing != null && !landing.isAfter(takeoff)) {
@@ -155,6 +166,13 @@ class FlightWriteService(
         }
         flights.deleteById(flight.id)
         audit.logCurrent("FLIGHT_DELETED", "Flight", id, level = AuditLevel.WARN)
+    }
+
+    @Transactional(readOnly = true)
+    fun findMyOpenFlight(): FlightResponse? {
+        val user = currentUser() ?: return null
+        val open = flights.findOpenByCreator(user)
+        return open.firstOrNull()?.let { toResponse(it) }
     }
 
     fun toResponse(flight: Flight): FlightResponse {
