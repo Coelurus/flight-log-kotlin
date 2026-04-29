@@ -59,11 +59,12 @@ class AdminFlightController(
         @RequestParam(required = false) durationMin: Double?,
         @RequestParam(required = false) durationMax: Double?,
         @RequestParam(defaultValue = "false") inAirOnly: Boolean,
+        @RequestParam(defaultValue = "false") landedOnly: Boolean,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "25") size: Int,
     ): PagedResponse<FlightResponse> = query.list(
         FlightFilter(dateFrom, dateTo, category, immatriculation, takeoffFrom, takeoffTo,
-            durationMin, durationMax, inAirOnly, page, size)
+            durationMin, durationMax, inAirOnly, landedOnly, page, size)
     )
 
     @PostMapping
@@ -91,9 +92,10 @@ class AdminFlightController(
         @RequestParam(required = false) durationMin: Double?,
         @RequestParam(required = false) durationMax: Double?,
         @RequestParam(defaultValue = "false") inAirOnly: Boolean,
+        @RequestParam(defaultValue = "false") landedOnly: Boolean,
     ): ResponseEntity<*> {
         val filter = FlightFilter(dateFrom, dateTo, category, immatriculation, takeoffFrom, takeoffTo,
-            durationMin, durationMax, inAirOnly, page = 0, size = Int.MAX_VALUE)
+            durationMin, durationMax, inAirOnly, landedOnly, page = 0, size = Int.MAX_VALUE)
         val total = query.findAll(filter).size
         if (total > ASYNC_EXPORT_THRESHOLD) {
             val job = exportJobs.submit(filter)

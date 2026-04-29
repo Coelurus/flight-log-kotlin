@@ -14,29 +14,67 @@
         .topbar { display: flex; justify-content: space-between; align-items: center;
                   flex-wrap: wrap; gap: .5rem; }
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 1rem; }
-        table { width: 100%; min-width: 720px; border-collapse: collapse; background: #fff; }
+        table { width: 100%; min-width: 820px; border-collapse: collapse; background: #fff; }
         th, td { padding: .6rem .5rem; border-bottom: 1px solid #ddd; text-align: left;
                  font-size: .9rem; vertical-align: top; }
-        th { background: #0d47a1; color: #fff; position: sticky; top: 0; }
+        th { background: #0d47a1; color: #fff; position: sticky; top: 0; cursor: default; }
         tbody tr:nth-child(even) { background: #f3f6fb; }
+        tbody tr.in-air { background: #fff8e1 !important; }
         button, input, select { min-height: 44px; padding: .5rem; font-size: 1rem;
                                 border-radius: 4px; border: 2px solid #999; background: #fff; color: #111; }
-        button { background: #0d47a1; color: #fff; cursor: pointer; border: none; }
+        button { background: #0d47a1; color: #fff; cursor: pointer; border: none; font-weight: 600; }
         button.secondary { background: #455a64; }
         button.danger { background: #b71c1c; }
+        button.success { background: #1b5e20; }
         .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; align-items: end; }
         .filters label { display: flex; flex-direction: column; font-size: .85rem; font-weight: 600;
-                         min-width: 130px; }
-        .filters label.checkbox { flex-direction: row; align-items: center; gap: .35rem; }
+                         min-width: 140px; }
         .filters .actions-row { display: flex; flex-wrap: wrap; gap: .5rem; width: 100%; }
         .pagination { margin-top: 1rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
         .actions { white-space: nowrap; }
-        .actions button { margin-right: .25rem; padding: .35rem .65rem; min-height: 36px; font-size: .85rem; }
-        .err { color: #b71c1c; font-weight: 600; }
-        .ok { color: #1b5e20; font-weight: 600; }
+        .actions button { margin-right: .25rem; padding: .35rem .65rem; min-height: 36px;
+                          font-size: .85rem; font-weight: 600; }
+        .radio-group { display: flex; gap: .25rem; padding: .25rem; background: #eceff1; border-radius: 4px;
+                       border: 2px solid #cfd8dc; }
+        .radio-group label { display: flex; align-items: center; gap: .35rem; font-size: .85rem;
+                             font-weight: 600; cursor: pointer; padding: .25rem .5rem; min-width: auto;
+                             flex-direction: row; border-radius: 3px; user-select: none; }
+        .radio-group input[type=radio] { display: none; }
+        .radio-group input[type=radio]:checked + span { background: #0d47a1; color: #fff;
+                                                         padding: .35rem .65rem; border-radius: 3px; }
+        .radio-group label > span { padding: .35rem .65rem; }
         @media (max-width: 600px) {
             .filters label { min-width: 47%; flex: 1 1 47%; }
         }
+
+        /* Toast */
+        #toast { position: fixed; left: 50%; top: 1rem; transform: translateX(-50%) translateY(-20px);
+                 background: #263238; color: #fff; padding: .75rem 1.25rem; border-radius: 4px;
+                 box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 600; opacity: 0; pointer-events: none;
+                 transition: opacity .2s, transform .2s; z-index: 9999; max-width: 90vw;
+                 display: flex; align-items: center; gap: .65rem; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.ok    { background: #1b5e20; }
+        #toast.err   { background: #b71c1c; }
+        #toast.info  { background: #0d47a1; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.35);
+                   border-top-color: #fff; border-radius: 50%;
+                   animation: spin .9s linear infinite; flex: 0 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55);
+                          display: none; align-items: center; justify-content: center; z-index: 9000; padding: 1rem; }
+        .modal-backdrop.show { display: flex; }
+        .modal { background: #fff; border-radius: 8px; padding: 1.5rem; max-width: 540px; width: 100%;
+                 max-height: 90vh; overflow-y: auto; }
+        .modal h2 { margin: 0 0 1rem; color: #0d47a1; }
+        .modal label { display: block; font-weight: 600; margin-top: .75rem; font-size: .9rem; }
+        .modal input, .modal select { width: 100%; margin-top: .25rem; }
+        .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+        .modal .modal-actions { display: flex; gap: .5rem; margin-top: 1.5rem; }
+        .modal .modal-actions button { flex: 1; }
+        .field-error { color: #b71c1c; font-size: .8rem; min-height: 1rem; display: block; margin-top: .15rem; }
     </style>
     <script src="/pwa-register.js" defer></script>
 </head>
@@ -46,9 +84,9 @@
     <button id="logout" class="secondary">Odhlásit se</button>
 </div>
 
-<form id="filters" class="filters">
-    <label>Od (DD-MM-YYYY)<input name="dateFrom" type="text" pattern="\d{2}-\d{2}-\d{4}" inputmode="numeric" /></label>
-    <label>Do (DD-MM-YYYY)<input name="dateTo" type="text" pattern="\d{2}-\d{2}-\d{4}" inputmode="numeric" /></label>
+<form id="filters" class="filters" novalidate>
+    <label>Od<input name="dateFrom" type="date" /></label>
+    <label>Do<input name="dateTo" type="date" /></label>
     <label>Kategorie
         <select name="category">
             <option value="">Vše</option>
@@ -56,8 +94,18 @@
             <option value="POWERED">Motorové</option>
         </select>
     </label>
-    <label>Imatrikulace<input name="immatriculation" type="text" maxlength="20" /></label>
-    <label class="checkbox"><input name="inAirOnly" type="checkbox" /> Právě ve vzduchu</label>
+    <label>Imatrikulace
+        <input name="immatriculation" type="text" maxlength="20" autocomplete="off"
+               list="immat-list" style="text-transform:uppercase" />
+    </label>
+    <datalist id="immat-list"></datalist>
+    <label>Stav
+        <div class="radio-group" role="radiogroup" aria-label="Stav">
+            <label><input type="radio" name="status" value="all" checked /><span>Vše</span></label>
+            <label><input type="radio" name="status" value="in-air" /><span>Ve vzduchu</span></label>
+            <label><input type="radio" name="status" value="landed" /><span>Přistálé</span></label>
+        </div>
+    </label>
     <label>Na stránku
         <select name="size">
             <option>10</option><option selected>25</option><option>50</option>
@@ -71,8 +119,6 @@
         <input type="file" id="import-file" accept=".csv" style="display:none" />
     </div>
 </form>
-
-<p id="status" role="status" aria-live="polite"></p>
 
 <div class="table-wrap">
     <table id="flights-table">
@@ -89,25 +135,128 @@
     <button type="button" id="next">Další ›</button>
 </div>
 
+<!-- Edit modal -->
+<div class="modal-backdrop" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="modal">
+        <h2 id="edit-title">Upravit let</h2>
+        <form id="edit-form" novalidate>
+            <input type="hidden" name="id" />
+            <label>Datum<input name="date" type="date" required /></label>
+            <label>Pilot<input name="pilotName" type="text" required maxlength="50" autocomplete="off" list="pilot-list" /></label>
+            <datalist id="pilot-list"></datalist>
+            <label>Imatrikulace<input name="gliderImmatriculation" type="text" required maxlength="20"
+                                       list="immat-list" style="text-transform:uppercase" /></label>
+            <label>Typ letadla <span style="font-weight:400;color:#666;font-size:.8rem">(jen u nového hostujícího)</span>
+                <input name="gliderType" type="text" maxlength="100" />
+            </label>
+            <label>Úkol<input name="task" type="text" required maxlength="200" /></label>
+            <div class="row">
+                <label>Start<input name="takeoffTime" type="time" required /></label>
+                <label>Přistání<input name="landingTime" type="time" /></label>
+            </div>
+            <label>Typ startu
+                <select name="startType" required>
+                    <option value="WINCH">Naviák</option>
+                    <option value="TOW">Motorové letadlo</option>
+                </select>
+            </label>
+            <span class="field-error" id="edit-error"></span>
+            <div class="modal-actions">
+                <button type="button" class="secondary" id="edit-cancel">Zrušit</button>
+                <button type="submit" class="success" id="edit-save">Uložit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
 <script>
 'use strict';
+
 let page = 0;
 let totalPages = 1;
+let currentRows = [];
 const tbody = document.querySelector('#flights-table tbody');
 const filters = document.getElementById('filters');
-const statusBox = document.getElementById('status');
+const toast = document.getElementById('toast');
+let toastTimer = null;
 
-function setStatus(msg, cls) {
-    statusBox.textContent = msg || '';
-    statusBox.className = cls || '';
+/* ---------- Toast ---------- */
+function showToast(msg, kind, opts) {
+    opts = opts || {};
+    toast.className = '';
+    toast.classList.add('show', kind || 'info');
+    const safe = String(msg).replace(/[<>&]/g, function (c) {
+        return c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;';
+    });
+    toast.innerHTML = (opts.spinner ? '<span class="spinner" aria-hidden="true"></span>' : '') + '<span>' + safe + '</span>';
+    if (toastTimer) clearTimeout(toastTimer);
+    if (opts.sticky) return;
+    toastTimer = setTimeout(hideToast, opts.duration || 3500);
+}
+function hideToast() {
+    toast.classList.remove('show');
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
 }
 
+/* ---------- Date helpers ---------- */
+function isoToCz(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return m ? (m[3] + '-' + m[2] + '-' + m[1]) : '';
+}
+function czToIso(cz) {
+    const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(cz || '');
+    return m ? (m[3] + '-' + m[2] + '-' + m[1]) : '';
+}
+
+/* ---------- Datalists (autocomplete) ---------- */
+fetch('/airplane', { credentials: 'include' })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (list) {
+        const dl = document.getElementById('immat-list');
+        if (!dl || !Array.isArray(list)) return;
+        list.forEach(function (a) {
+            const opt = document.createElement('option');
+            opt.value = a.immatriculation || '';
+            opt.label = a.type || '';
+            dl.appendChild(opt);
+        });
+    })
+    .catch(function () { /* ignore */ });
+
+fetch('/user', { credentials: 'include' })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (list) {
+        const dl = document.getElementById('pilot-list');
+        if (!dl || !Array.isArray(list)) return;
+        list.forEach(function (p) {
+            const fullName = [p.firstName, p.lastName].filter(Boolean).join(' ').trim();
+            if (!fullName) return;
+            const opt = document.createElement('option');
+            opt.value = fullName;
+            dl.appendChild(opt);
+        });
+    })
+    .catch(function () { /* ignore */ });
+
+/* ---------- Query / load ---------- */
 function buildQuery(extra) {
     const data = {};
-    new FormData(filters).forEach((v, k) => { data[k] = v; });
-    if (!data.inAirOnly) delete data.inAirOnly; else data.inAirOnly = 'true';
+    new FormData(filters).forEach(function (v, k) {
+        if (k === 'dateFrom' || k === 'dateTo') {
+            const cz = isoToCz(v); if (cz) data[k] = cz;
+        } else if (k === 'status') {
+            if (v === 'in-air') data.inAirOnly = 'true';
+            else if (v === 'landed') data.landedOnly = 'true';
+        } else if (k === 'immatriculation') {
+            const t = (v || '').trim().toUpperCase(); if (t) data[k] = t;
+        } else if (v !== '' && v != null) {
+            data[k] = v;
+        }
+    });
     Object.assign(data, extra || {});
-    Object.keys(data).forEach((k) => { if (data[k] === '' || data[k] == null) delete data[k]; });
+    Object.keys(data).forEach(function (k) { if (data[k] === '' || data[k] == null) delete data[k]; });
     return new URLSearchParams(data).toString();
 }
 
@@ -118,112 +267,215 @@ function categoryLabel(c) {
 }
 
 async function load() {
-    setStatus('Načítám…');
+    showToast('Načítám…', 'info', { spinner: true, sticky: true });
     try {
         const sizeSel = filters.elements['size'];
-        const q = buildQuery({ page, size: sizeSel ? sizeSel.value : '25' });
+        const q = buildQuery({ page: page, size: sizeSel ? sizeSel.value : '25' });
         const resp = await fetch('/api/admin/flights?' + q, { credentials: 'include' });
-        if (resp.status === 401 || resp.status === 403) {
-            window.location.href = '/login.html';
-            return;
-        }
-        if (!resp.ok) {
-            setStatus('Načtení selhalo (HTTP ' + resp.status + ').', 'err');
-            return;
-        }
+        if (resp.status === 401 || resp.status === 403) { window.location.href = '/login.html'; return; }
+        if (!resp.ok) { showToast('Načtení selhalo (HTTP ' + resp.status + ').', 'err'); return; }
         const data = await resp.json();
-        const rows = Array.isArray(data.content) ? data.content : [];
-        tbody.innerHTML = '';
-        if (rows.length === 0) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td colspan="10" style="text-align:center;padding:1rem;">Žádné záznamy.</td>';
-            tbody.appendChild(tr);
-        } else {
-            rows.forEach((f) => {
-                const tr = document.createElement('tr');
-                const dur = (f.durationHours == null) ? '' : Number(f.durationHours).toFixed(2);
-                const pilot = (f.pilotName || '') + (f.pilotClubMember === false ? ' (externí)' : '');
-                tr.innerHTML =
-                    '<td>' + (f.date || '') + '</td>' +
-                    '<td>' + categoryLabel(f.category) + '</td>' +
-                    '<td>' + (f.airplaneType || '') + '</td>' +
-                    '<td>' + (f.airplaneImmatriculation || '') + '</td>' +
-                    '<td>' + pilot + '</td>' +
-                    '<td>' + (f.task || '') + '</td>' +
-                    '<td>' + (f.takeoffTime || '') + '</td>' +
-                    '<td>' + (f.landingTime || '') + '</td>' +
-                    '<td>' + dur + '</td>' +
-                    '<td class="actions"><button class="danger" data-id="' + f.id + '" data-act="del">Smazat</button></td>';
-                tbody.appendChild(tr);
-            });
-        }
+        currentRows = Array.isArray(data.content) ? data.content : [];
+        renderRows(currentRows);
         totalPages = Math.max(1, data.totalPages || 1);
         document.getElementById('page-info').textContent = 'strana ' + (page + 1) + ' / ' + totalPages;
-        setStatus('Zobrazeno ' + rows.length + ' záznamů (celkem ' + (data.totalElements || 0) + ').', 'ok');
+        document.getElementById('prev').disabled = page <= 0;
+        document.getElementById('next').disabled = page >= totalPages - 1;
+        showToast('Zobrazeno ' + currentRows.length + ' z ' + (data.totalElements || 0) + '.', 'ok', { duration: 1800 });
     } catch (err) {
         console.error('Load failed:', err);
-        setStatus('Chyba spojení se serverem.', 'err');
+        showToast('Chyba spojení se serverem.', 'err');
     }
 }
 
+function renderRows(rows) {
+    tbody.innerHTML = '';
+    if (rows.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="10" style="text-align:center;padding:1rem;color:#666;">Žádné záznamy.</td>';
+        tbody.appendChild(tr);
+        return;
+    }
+    rows.forEach(function (f) {
+        const tr = document.createElement('tr');
+        if (!f.landingTime) tr.classList.add('in-air');
+        const pilot = (f.pilotName || '') + (f.pilotClubMember === false ? ' (externí)' : '');
+        const landingCell = f.landingTime
+            ? esc(f.landingTime)
+            : '<em style="color:#e65100">ve vzduchu</em>';
+        const durationCell = f.landingTime ? esc(formatDuration(f.durationHours)) : '';
+        tr.innerHTML =
+            '<td>' + esc(f.date) + '</td>' +
+            '<td>' + categoryLabel(f.category) + '</td>' +
+            '<td>' + esc(f.airplaneType) + '</td>' +
+            '<td>' + esc(f.airplaneImmatriculation) + '</td>' +
+            '<td>' + esc(pilot) + '</td>' +
+            '<td>' + esc(f.task) + '</td>' +
+            '<td>' + esc(f.takeoffTime) + '</td>' +
+            '<td>' + landingCell + '</td>' +
+            '<td>' + durationCell + '</td>' +
+            '<td class="actions">' +
+                '<button class="success" data-id="' + f.id + '" data-act="edit">Upravit</button>' +
+                '<button class="danger"  data-id="' + f.id + '" data-act="del">Smazat</button>' +
+            '</td>';
+        tbody.appendChild(tr);
+    });
+}
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/[<>&]/g, function (c) {
+        return c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;';
+    });
+}
+function formatDuration(hours) {
+    if (hours == null || isNaN(hours)) return '';
+    const totalMin = Math.round(Number(hours) * 60);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h <= 0) return m + 'min';
+    return h + 'h ' + m + 'min';
+}
+
+/* ---------- Filter wiring ---------- */
 filters.addEventListener('submit', function (ev) { ev.preventDefault(); page = 0; load(); });
 filters.addEventListener('reset', function () { setTimeout(function () { page = 0; load(); }, 0); });
-
-// Auto-refilter when category / inAirOnly / size changes (better mobile UX).
-['category', 'inAirOnly', 'size'].forEach(function (name) {
-    var el = filters.elements[name];
+['category', 'size'].forEach(function (name) {
+    const el = filters.elements[name];
     if (el) el.addEventListener('change', function () { page = 0; load(); });
+});
+filters.querySelectorAll('input[name="status"]').forEach(function (r) {
+    r.addEventListener('change', function () { page = 0; load(); });
 });
 
 document.getElementById('prev').addEventListener('click', function () { if (page > 0) { page--; load(); } });
 document.getElementById('next').addEventListener('click', function () { if (page < totalPages - 1) { page++; load(); } });
 
+/* ---------- Row actions ---------- */
 tbody.addEventListener('click', async function (ev) {
-    const btn = ev.target.closest('button[data-act="del"]');
+    const btn = ev.target.closest('button[data-act]');
     if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'del') return doDelete(id);
+    if (btn.dataset.act === 'edit') return openEdit(id);
+});
+
+async function doDelete(id) {
     if (!confirm('Opravdu smazat tento záznam?')) return;
     const cascade = confirm('Smazat i propojený let (vlek/kluzák), pokud existuje?\nOK = smazat oba, Zrušit = pouze tento.');
+    showToast('Mažu…', 'info', { spinner: true, sticky: true });
     try {
-        const resp = await fetch('/api/admin/flights/' + btn.dataset.id + '?cascade=' + cascade, {
-            method: 'DELETE', credentials: 'include',
-        });
-        if (resp.ok) { setStatus('Záznam smazán.', 'ok'); load(); }
+        const resp = await fetch('/api/admin/flights/' + id + '?cascade=' + cascade,
+            { method: 'DELETE', credentials: 'include' });
+        if (resp.ok) { showToast('Záznam smazán.', 'ok'); load(); }
         else if (resp.status === 401 || resp.status === 403) { window.location.href = '/login.html'; }
-        else { setStatus('Smazání selhalo (HTTP ' + resp.status + ').', 'err'); }
+        else { showToast('Smazání selhalo (HTTP ' + resp.status + ').', 'err'); }
     } catch (err) {
         console.error('Delete failed:', err);
-        setStatus('Chyba spojení – smazání selhalo.', 'err');
+        showToast('Chyba spojení – smazání selhalo.', 'err');
+    }
+}
+
+/* ---------- Edit modal ---------- */
+const editModal = document.getElementById('edit-modal');
+const editForm = document.getElementById('edit-form');
+const editError = document.getElementById('edit-error');
+
+function openEdit(id) {
+    const flight = currentRows.find(function (f) { return String(f.id) === String(id); });
+    if (!flight) { showToast('Záznam nenalezen.', 'err'); return; }
+    editError.textContent = '';
+    editForm.id.value = flight.id;
+    editForm.date.value = czToIso(flight.date);
+    editForm.pilotName.value = flight.pilotName || '';
+    editForm.gliderImmatriculation.value = flight.airplaneImmatriculation || '';
+    editForm.gliderType.value = flight.airplaneType || '';
+    editForm.task.value = flight.task || '';
+    editForm.takeoffTime.value = flight.takeoffTime || '';
+    editForm.landingTime.value = flight.landingTime || '';
+    editForm.startType.value = flight.startType || 'WINCH';
+    editModal.classList.add('show');
+    editForm.date.focus();
+}
+function closeEdit() { editModal.classList.remove('show'); }
+
+document.getElementById('edit-cancel').addEventListener('click', closeEdit);
+editModal.addEventListener('click', function (ev) { if (ev.target === editModal) closeEdit(); });
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeEdit(); });
+
+editForm.addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    editError.textContent = '';
+    const data = Object.fromEntries(new FormData(editForm).entries());
+    const body = {
+        date: isoToCz(data.date),
+        pilotName: (data.pilotName || '').trim(),
+        gliderImmatriculation: (data.gliderImmatriculation || '').trim().toUpperCase(),
+        task: (data.task || '').trim(),
+        takeoffTime: data.takeoffTime,
+        startType: data.startType,
+    };
+    if (data.gliderType && data.gliderType.trim()) body.gliderType = data.gliderType.trim();
+    if (data.landingTime) body.landingTime = data.landingTime;
+    if (!body.date || !body.pilotName || !body.gliderImmatriculation || !body.task || !body.takeoffTime) {
+        editError.textContent = 'Vyplňte povinná pole.';
+        return;
+    }
+    document.getElementById('edit-save').disabled = true;
+    showToast('Ukládám…', 'info', { spinner: true, sticky: true });
+    try {
+        const resp = await fetch('/api/admin/flights/' + data.id, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const j = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) {
+            editError.textContent = j.message || ('Uložení selhalo (HTTP ' + resp.status + ').');
+            showToast(j.message || 'Uložení selhalo.', 'err', { duration: 5000 });
+            return;
+        }
+        showToast('Záznam uložen.', 'ok');
+        closeEdit();
+        load();
+    } catch (err) {
+        console.error('Update failed:', err);
+        editError.textContent = 'Chyba spojení.';
+        showToast('Chyba spojení.', 'err');
+    } finally {
+        document.getElementById('edit-save').disabled = false;
     }
 });
 
+/* ---------- Export ---------- */
 document.getElementById('export-btn').addEventListener('click', async function () {
     const q = buildQuery({});
+    showToast('Spouštím export…', 'info', { spinner: true, sticky: true });
     try {
         const resp = await fetch('/api/admin/flights/export?' + q, { credentials: 'include' });
         if (resp.status === 202) {
             const job = await resp.json();
-            setStatus('Export běží na pozadí. Job ' + job.jobId + ' – načítám…');
+            showToast('Export běží na pozadí (' + job.jobId + ')…', 'info', { spinner: true, sticky: true });
             const poll = setInterval(async function () {
                 const r = await fetch('/api/admin/flights/exports/' + job.jobId, { credentials: 'include' });
                 const ct = r.headers.get('content-type') || '';
                 if (ct.includes('text/csv')) {
                     clearInterval(poll);
                     downloadBlob(await r.blob(), 'flightlog_export.csv');
-                    setStatus('Export hotov.', 'ok');
+                    showToast('Export hotov.', 'ok');
                 } else {
                     const j = await r.json().catch(function () { return {}; });
-                    if (j.status === 'failed') { clearInterval(poll); setStatus('Export selhal: ' + j.error, 'err'); }
+                    if (j.status === 'failed') { clearInterval(poll); showToast('Export selhal: ' + j.error, 'err'); }
                 }
             }, 1000);
         } else if (resp.ok) {
             downloadBlob(await resp.blob(), 'flightlog_export.csv');
-            setStatus('Export hotov.', 'ok');
+            showToast('Export hotov.', 'ok');
         } else {
-            setStatus('Export selhal (HTTP ' + resp.status + ').', 'err');
+            showToast('Export selhal (HTTP ' + resp.status + ').', 'err');
         }
     } catch (err) {
         console.error('Export failed:', err);
-        setStatus('Chyba spojení – export selhal.', 'err');
+        showToast('Chyba spojení – export selhal.', 'err');
     }
 });
 
@@ -234,6 +486,7 @@ function downloadBlob(blob, name) {
     setTimeout(function () { URL.revokeObjectURL(url); }, 0);
 }
 
+/* ---------- Import ---------- */
 document.getElementById('import-btn').addEventListener('click', function () {
     document.getElementById('import-file').click();
 });
@@ -241,25 +494,29 @@ document.getElementById('import-file').addEventListener('change', async function
     const file = ev.target.files[0]; if (!file) return;
     ev.target.value = '';
     const fd = new FormData(); fd.append('file', file);
+    showToast('Nahrávám soubor…', 'info', { spinner: true, sticky: true });
     try {
         const resp = await fetch('/api/admin/flights/import', { method: 'POST', credentials: 'include', body: fd });
         const data = await resp.json().catch(function () { return {}; });
         if (!resp.ok) {
-            setStatus('Import selhal (' + (data.errors ? data.errors.length : 0) + ' chyb).', 'err');
+            showToast('Import selhal (' + (data.errors ? data.errors.length : 0) + ' chyb).', 'err', { duration: 6000 });
             if (data.errors && data.errors.length) console.table(data.errors);
             return;
         }
-        if (!confirm('K importu připraveno ' + data.toImport + ' záznamů. Pokračovat?')) return;
+        if (!confirm('K importu připraveno ' + data.toImport + ' záznamů. Pokračovat?')) {
+            hideToast(); return;
+        }
+        showToast('Potvrzuji import…', 'info', { spinner: true, sticky: true });
         const cr = await fetch('/api/admin/flights/import/confirm', {
             method: 'POST', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ confirmationToken: data.confirmationToken }),
         });
-        if (cr.ok) { setStatus('Import dokončen.', 'ok'); load(); }
-        else { setStatus('Import selhal při potvrzení.', 'err'); }
+        if (cr.ok) { showToast('Import dokončen.', 'ok'); load(); }
+        else { showToast('Import selhal při potvrzení.', 'err'); }
     } catch (err) {
         console.error('Import failed:', err);
-        setStatus('Chyba spojení – import selhal.', 'err');
+        showToast('Chyba spojení – import selhal.', 'err');
     }
 });
 
@@ -267,6 +524,9 @@ document.getElementById('logout').addEventListener('click', async function () {
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); }
     finally { window.location.href = '/login.html'; }
 });
+
+window.addEventListener('online',  function () { showToast('Online', 'ok', { duration: 1800 }); });
+window.addEventListener('offline', function () { showToast('Offline', 'info', { duration: 3000 }); });
 
 load();
 </script>

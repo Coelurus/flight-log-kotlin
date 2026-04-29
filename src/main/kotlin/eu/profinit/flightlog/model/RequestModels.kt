@@ -70,6 +70,7 @@ data class FlightFilter(
     val durationMin: Double? = null,
     val durationMax: Double? = null,
     val inAirOnly: Boolean = false,
+    val landedOnly: Boolean = false,
     @field:Min(0) val page: Int = 0,
     @field:Min(1) @field:Max(50) val size: Int = 25,
 )

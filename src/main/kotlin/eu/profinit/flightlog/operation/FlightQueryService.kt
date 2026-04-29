@@ -63,6 +63,7 @@ class FlightQueryService(
         filter.takeoffFrom?.let { predicates += cb.greaterThanOrEqualTo(root.get("takeoffTime"), parseTimeBoundary(it, false)) }
         filter.takeoffTo?.let { predicates += cb.lessThanOrEqualTo(root.get("takeoffTime"), parseTimeBoundary(it, true)) }
         if (filter.inAirOnly) predicates += cb.isNull(root.get<OffsetDateTime>("landingTime"))
+        if (filter.landedOnly) predicates += cb.isNotNull(root.get<OffsetDateTime>("landingTime"))
 
         cb.and(*predicates.toTypedArray())
     }
