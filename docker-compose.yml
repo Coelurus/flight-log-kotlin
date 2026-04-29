@@ -37,6 +37,63 @@ services:
       postgres:
         condition: service_healthy
 
+  # ============================== ELK stack ==============================
+  # Single-node Elasticsearch 8 with security disabled (DEV only).
+  # UI: http://localhost:5601 (Kibana). Index pattern: flightlog-*
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: flightlog-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+      - bootstrap.memory_lock=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - flightlog-esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+
+  # Logstash receives JSON events from the app via TCP 5044
+  # and indexes them into Elasticsearch.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.3
+    container_name: flightlog-logstash
+    restart: unless-stopped
+    environment:
+      - LS_JAVA_OPTS=-Xms128m -Xmx128m
+      - xpack.monitoring.enabled=false
+    ports:
+      - "5044:5044"   # app -> logstash (json over TCP)
+    volumes:
+      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    container_name: flightlog-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_REPORTING_ENABLED=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
 volumes:
   flightlog-pgdata:
   flightlog-pgadmin:
+  flightlog-esdata:

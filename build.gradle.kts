@@ -38,6 +38,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
+    // ELK shipping: structured JSON encoder + TCP/UDP appenders for Logstash.
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+
     runtimeOnly("org.postgresql:postgresql")
 
     // RestSharp replacement: use Spring's RestClient (built into spring-boot-starter-web).

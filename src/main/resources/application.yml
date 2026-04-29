@@ -58,3 +58,7 @@ logging:
   level:
     root: INFO
     eu.profinit.flightlog: INFO
+  logstash:
+    enabled: ${LOGSTASH_ENABLED:true}
+    host: ${LOGSTASH_HOST:localhost}
+    port: ${LOGSTASH_PORT:5044}

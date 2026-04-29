@@ -1,25 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+
+    <!-- Tunable via env / -D. LOGSTASH_ENABLED=false disables shipping entirely. -->
+    <springProperty scope="context" name="LOGSTASH_HOST" source="logging.logstash.host" defaultValue="localhost"/>
+    <springProperty scope="context" name="LOGSTASH_PORT" source="logging.logstash.port" defaultValue="5044"/>
+    <springProperty scope="context" name="LOGSTASH_ENABLED" source="logging.logstash.enabled" defaultValue="true"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="flight-log"/>
+
+    <!-- ============================== Console (human-readable) ============================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%date %5level %logger.%method [%line] - %message%n</pattern>
+            <pattern>%date %5level [%X{requestId:--} %X{user:--}] %logger{36} - %message%n</pattern>
         </encoder>
     </appender>
 
+    <!-- ============================== File (rolling, JSON for re-ingest) ============================== -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>app.log</file>
+        <file>logs/app.json</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>100KB</maxFileSize>
-            <maxHistory>2</maxHistory>
+            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+            <maxFileSize>20MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
         </rollingPolicy>
-        <encoder>
-            <pattern>%date %5level %logger.%method [%line] - %message%n</pattern>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"${APP_NAME}","env":"${ENV:-dev}"}</customFields>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>user</includeMdcKeyName>
+            <includeMdcKeyName>role</includeMdcKeyName>
+            <includeMdcKeyName>ip</includeMdcKeyName>
+            <includeMdcKeyName>method</includeMdcKeyName>
+            <includeMdcKeyName>path</includeMdcKeyName>
         </encoder>
     </appender>
+
+    <!-- ============================== Logstash (TCP, JSON) ============================== -->
+    <!-- Uses async TCP. If Logstash is down the socket appender drops events instead of
+         blocking the application thread. ringBufferSize keeps a 8K buffer for bursts. -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
+        <reconnectionDelay>5 seconds</reconnectionDelay>
+        <writeBufferSize>16384</writeBufferSize>
+        <keepAliveDuration>1 minute</keepAliveDuration>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"${APP_NAME}","env":"${ENV:-dev}"}</customFields>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>user</includeMdcKeyName>
+            <includeMdcKeyName>role</includeMdcKeyName>
+            <includeMdcKeyName>ip</includeMdcKeyName>
+            <includeMdcKeyName>method</includeMdcKeyName>
+            <includeMdcKeyName>path</includeMdcKeyName>
+            <includeMdcKeyName>status</includeMdcKeyName>
+            <includeMdcKeyName>durationMs</includeMdcKeyName>
+        </encoder>
+    </appender>
+
+    <!-- Wrap LOGSTASH in async + a guard that disables it cleanly when ELK is off. -->
+    <appender name="LOGSTASH_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="LOGSTASH"/>
+    </appender>
+
+    <!-- ============================== Loggers ============================== -->
+
+    <!-- Reduce framework noise that drowns out app events. -->
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.apache.coyote" level="WARN"/>
+    <logger name="org.apache.catalina" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+    <!-- Highlight our own packages. -->
+    <logger name="eu.profinit.flightlog" level="INFO"/>
+    <!-- Audit + access loggers always at INFO so business events ship to ELK. -->
+    <logger name="eu.profinit.flightlog.audit" level="INFO"/>
+    <logger name="eu.profinit.flightlog.access" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="LOGSTASH_ASYNC"/>
     </root>
 </configuration>

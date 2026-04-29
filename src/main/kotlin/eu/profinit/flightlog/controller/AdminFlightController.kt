@@ -1,5 +1,6 @@
 package eu.profinit.flightlog.controller
 
+import eu.profinit.flightlog.audit.AuditService
 import eu.profinit.flightlog.model.AirplaneCategoryDto
 import eu.profinit.flightlog.model.CreateFlightRequest
 import eu.profinit.flightlog.model.CreateFlightResponse
@@ -43,6 +44,7 @@ class AdminFlightController(
     private val export: GetExportToCsvOperation,
     private val exportJobs: ExportJobRegistry,
     private val import: FlightImportService,
+    private val audit: AuditService,
 ) {
     companion object {
         const val ASYNC_EXPORT_THRESHOLD = 1000
@@ -97,6 +99,7 @@ class AdminFlightController(
         val filter = FlightFilter(dateFrom, dateTo, category, immatriculation, takeoffFrom, takeoffTo,
             durationMin, durationMax, inAirOnly, landedOnly, page = 0, size = Int.MAX_VALUE)
         val total = query.findAll(filter).size
+        audit.logCurrent("FLIGHTS_EXPORT_REQUESTED", details = "count=$total")
         if (total > ASYNC_EXPORT_THRESHOLD) {
             val job = exportJobs.submit(filter)
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(mapOf("jobId" to job.id))
