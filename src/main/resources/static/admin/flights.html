@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d47a1" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Přehled letů – FlightLog</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #fafafa; color: #111;
+               margin: 0; padding: 1rem; }
+        h1 { color: #0d47a1; margin: 0 0 .5rem; }
+        .topbar { display: flex; justify-content: space-between; align-items: center;
+                  flex-wrap: wrap; gap: .5rem; }
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 1rem; }
+        table { width: 100%; min-width: 720px; border-collapse: collapse; background: #fff; }
+        th, td { padding: .6rem .5rem; border-bottom: 1px solid #ddd; text-align: left;
+                 font-size: .9rem; vertical-align: top; }
+        th { background: #0d47a1; color: #fff; position: sticky; top: 0; }
+        tbody tr:nth-child(even) { background: #f3f6fb; }
+        button, input, select { min-height: 44px; padding: .5rem; font-size: 1rem;
+                                border-radius: 4px; border: 2px solid #999; background: #fff; color: #111; }
+        button { background: #0d47a1; color: #fff; cursor: pointer; border: none; }
+        button.secondary { background: #455a64; }
+        button.danger { background: #b71c1c; }
+        .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; align-items: end; }
+        .filters label { display: flex; flex-direction: column; font-size: .85rem; font-weight: 600;
+                         min-width: 130px; }
+        .filters label.checkbox { flex-direction: row; align-items: center; gap: .35rem; }
+        .filters .actions-row { display: flex; flex-wrap: wrap; gap: .5rem; width: 100%; }
+        .pagination { margin-top: 1rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+        .actions { white-space: nowrap; }
+        .actions button { margin-right: .25rem; padding: .35rem .65rem; min-height: 36px; font-size: .85rem; }
+        .err { color: #b71c1c; font-weight: 600; }
+        .ok { color: #1b5e20; font-weight: 600; }
+        @media (max-width: 600px) {
+            .filters label { min-width: 47%; flex: 1 1 47%; }
+        }
+    </style>
+    <script src="/pwa-register.js" defer></script>
+</head>
+<body>
+<div class="topbar">
+    <h1>Přehled letů</h1>
+    <button id="logout" class="secondary">Odhlásit se</button>
+</div>
+
+<form id="filters" class="filters">
+    <label>Od (DD-MM-YYYY)<input name="dateFrom" type="text" pattern="\d{2}-\d{2}-\d{4}" inputmode="numeric" /></label>
+    <label>Do (DD-MM-YYYY)<input name="dateTo" type="text" pattern="\d{2}-\d{2}-\d{4}" inputmode="numeric" /></label>
+    <label>Kategorie
+        <select name="category">
+            <option value="">Vše</option>
+            <option value="GLIDER">Kluzák</option>
+            <option value="POWERED">Motorové</option>
+        </select>
+    </label>
+    <label>Imatrikulace<input name="immatriculation" type="text" maxlength="20" /></label>
+    <label class="checkbox"><input name="inAirOnly" type="checkbox" /> Právě ve vzduchu</label>
+    <label>Na stránku
+        <select name="size">
+            <option>10</option><option selected>25</option><option>50</option>
+        </select>
+    </label>
+    <div class="actions-row">
+        <button type="submit">Filtrovat</button>
+        <button type="reset" class="secondary" id="reset-btn">Zrušit filtr</button>
+        <button type="button" id="export-btn" class="secondary">Export CSV</button>
+        <button type="button" id="import-btn" class="secondary">Import CSV</button>
+        <input type="file" id="import-file" accept=".csv" style="display:none" />
+    </div>
+</form>
+
+<p id="status" role="status" aria-live="polite"></p>
+
+<div class="table-wrap">
+    <table id="flights-table">
+        <thead>
+            <tr><th>Datum</th><th>Druh</th><th>Typ</th><th>Imatrikulace</th><th>Pilot</th>
+                <th>Úkol</th><th>Start</th><th>Přistání</th><th>Doba</th><th>Akce</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<div class="pagination">
+    <button type="button" id="prev">‹ Předchozí</button>
+    <span id="page-info">strana 1 / 1</span>
+    <button type="button" id="next">Další ›</button>
+</div>
+
+<script>
+'use strict';
+let page = 0;
+let totalPages = 1;
+const tbody = document.querySelector('#flights-table tbody');
+const filters = document.getElementById('filters');
+const statusBox = document.getElementById('status');
+
+function setStatus(msg, cls) {
+    statusBox.textContent = msg || '';
+    statusBox.className = cls || '';
+}
+
+function buildQuery(extra) {
+    const data = {};
+    new FormData(filters).forEach((v, k) => { data[k] = v; });
+    if (!data.inAirOnly) delete data.inAirOnly; else data.inAirOnly = 'true';
+    Object.assign(data, extra || {});
+    Object.keys(data).forEach((k) => { if (data[k] === '' || data[k] == null) delete data[k]; });
+    return new URLSearchParams(data).toString();
+}
+
+function categoryLabel(c) {
+    if (c === 'GLIDER') return 'Kluzák';
+    if (c === 'POWERED') return 'Motorové';
+    return '';
+}
+
+async function load() {
+    setStatus('Načítám…');
+    try {
+        const sizeSel = filters.elements['size'];
+        const q = buildQuery({ page, size: sizeSel ? sizeSel.value : '25' });
+        const resp = await fetch('/api/admin/flights?' + q, { credentials: 'include' });
+        if (resp.status === 401 || resp.status === 403) {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (!resp.ok) {
+            setStatus('Načtení selhalo (HTTP ' + resp.status + ').', 'err');
+            return;
+        }
+        const data = await resp.json();
+        const rows = Array.isArray(data.content) ? data.content : [];
+        tbody.innerHTML = '';
+        if (rows.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="10" style="text-align:center;padding:1rem;">Žádné záznamy.</td>';
+            tbody.appendChild(tr);
+        } else {
+            rows.forEach((f) => {
+                const tr = document.createElement('tr');
+                const dur = (f.durationHours == null) ? '' : Number(f.durationHours).toFixed(2);
+                const pilot = (f.pilotName || '') + (f.pilotClubMember === false ? ' (externí)' : '');
+                tr.innerHTML =
+                    '<td>' + (f.date || '') + '</td>' +
+                    '<td>' + categoryLabel(f.category) + '</td>' +
+                    '<td>' + (f.airplaneType || '') + '</td>' +
+                    '<td>' + (f.airplaneImmatriculation || '') + '</td>' +
+                    '<td>' + pilot + '</td>' +
+                    '<td>' + (f.task || '') + '</td>' +
+                    '<td>' + (f.takeoffTime || '') + '</td>' +
+                    '<td>' + (f.landingTime || '') + '</td>' +
+                    '<td>' + dur + '</td>' +
+                    '<td class="actions"><button class="danger" data-id="' + f.id + '" data-act="del">Smazat</button></td>';
+                tbody.appendChild(tr);
+            });
+        }
+        totalPages = Math.max(1, data.totalPages || 1);
+        document.getElementById('page-info').textContent = 'strana ' + (page + 1) + ' / ' + totalPages;
+        setStatus('Zobrazeno ' + rows.length + ' záznamů (celkem ' + (data.totalElements || 0) + ').', 'ok');
+    } catch (err) {
+        console.error('Load failed:', err);
+        setStatus('Chyba spojení se serverem.', 'err');
+    }
+}
+
+filters.addEventListener('submit', function (ev) { ev.preventDefault(); page = 0; load(); });
+filters.addEventListener('reset', function () { setTimeout(function () { page = 0; load(); }, 0); });
+
+// Auto-refilter when category / inAirOnly / size changes (better mobile UX).
+['category', 'inAirOnly', 'size'].forEach(function (name) {
+    var el = filters.elements[name];
+    if (el) el.addEventListener('change', function () { page = 0; load(); });
+});
+
+document.getElementById('prev').addEventListener('click', function () { if (page > 0) { page--; load(); } });
+document.getElementById('next').addEventListener('click', function () { if (page < totalPages - 1) { page++; load(); } });
+
+tbody.addEventListener('click', async function (ev) {
+    const btn = ev.target.closest('button[data-act="del"]');
+    if (!btn) return;
+    if (!confirm('Opravdu smazat tento záznam?')) return;
+    const cascade = confirm('Smazat i propojený let (vlek/kluzák), pokud existuje?\nOK = smazat oba, Zrušit = pouze tento.');
+    try {
+        const resp = await fetch('/api/admin/flights/' + btn.dataset.id + '?cascade=' + cascade, {
+            method: 'DELETE', credentials: 'include',
+        });
+        if (resp.ok) { setStatus('Záznam smazán.', 'ok'); load(); }
+        else if (resp.status === 401 || resp.status === 403) { window.location.href = '/login.html'; }
+        else { setStatus('Smazání selhalo (HTTP ' + resp.status + ').', 'err'); }
+    } catch (err) {
+        console.error('Delete failed:', err);
+        setStatus('Chyba spojení – smazání selhalo.', 'err');
+    }
+});
+
+document.getElementById('export-btn').addEventListener('click', async function () {
+    const q = buildQuery({});
+    try {
+        const resp = await fetch('/api/admin/flights/export?' + q, { credentials: 'include' });
+        if (resp.status === 202) {
+            const job = await resp.json();
+            setStatus('Export běží na pozadí. Job ' + job.jobId + ' – načítám…');
+            const poll = setInterval(async function () {
+                const r = await fetch('/api/admin/flights/exports/' + job.jobId, { credentials: 'include' });
+                const ct = r.headers.get('content-type') || '';
+                if (ct.includes('text/csv')) {
+                    clearInterval(poll);
+                    downloadBlob(await r.blob(), 'flightlog_export.csv');
+                    setStatus('Export hotov.', 'ok');
+                } else {
+                    const j = await r.json().catch(function () { return {}; });
+                    if (j.status === 'failed') { clearInterval(poll); setStatus('Export selhal: ' + j.error, 'err'); }
+                }
+            }, 1000);
+        } else if (resp.ok) {
+            downloadBlob(await resp.blob(), 'flightlog_export.csv');
+            setStatus('Export hotov.', 'ok');
+        } else {
+            setStatus('Export selhal (HTTP ' + resp.status + ').', 'err');
+        }
+    } catch (err) {
+        console.error('Export failed:', err);
+        setStatus('Chyba spojení – export selhal.', 'err');
+    }
+});
+
+function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+}
+
+document.getElementById('import-btn').addEventListener('click', function () {
+    document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', async function (ev) {
+    const file = ev.target.files[0]; if (!file) return;
+    ev.target.value = '';
+    const fd = new FormData(); fd.append('file', file);
+    try {
+        const resp = await fetch('/api/admin/flights/import', { method: 'POST', credentials: 'include', body: fd });
+        const data = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) {
+            setStatus('Import selhal (' + (data.errors ? data.errors.length : 0) + ' chyb).', 'err');
+            if (data.errors && data.errors.length) console.table(data.errors);
+            return;
+        }
+        if (!confirm('K importu připraveno ' + data.toImport + ' záznamů. Pokračovat?')) return;
+        const cr = await fetch('/api/admin/flights/import/confirm', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirmationToken: data.confirmationToken }),
+        });
+        if (cr.ok) { setStatus('Import dokončen.', 'ok'); load(); }
+        else { setStatus('Import selhal při potvrzení.', 'err'); }
+    } catch (err) {
+        console.error('Import failed:', err);
+        setStatus('Chyba spojení – import selhal.', 'err');
+    }
+});
+
+document.getElementById('logout').addEventListener('click', async function () {
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); }
+    finally { window.location.href = '/login.html'; }
+});
+
+load();
+</script>
+</body>
+</html>

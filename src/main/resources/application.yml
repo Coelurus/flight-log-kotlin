@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: flight-log-kotlin
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/flightlog}
+    username: ${DB_USER:flightlog}
+    password: ${DB_PASSWORD:flightlog}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    # Existing databases (created by JPA's ddl-auto) are baselined automatically so
+    # Flyway only applies migrations from V2 onwards. New schema changes should be
+    # added as files in src/main/resources/db/migration named V<N>__<desc>.sql.
+    baseline-on-migrate: true
+    baseline-version: "1"
+    locations: classpath:db/migration
+  web:
+    resources:
+      static-locations: classpath:/static/
+  mvc:
+    static-path-pattern: /**
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: FLSESSION
+        http-only: true
+        same-site: lax
+
+flightlog:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:}
+  club-users-api: http://vyuka.profinit.eu:8080/
+  integration:
+    use-stub: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    root: INFO
+    eu.profinit.flightlog: INFO

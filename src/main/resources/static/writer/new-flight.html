@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d47a1" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Nový let – FlightLog</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #fafafa; color: #111; margin: 0; padding: 1rem; }
+        main { max-width: 640px; margin: 0 auto; background: #fff; padding: 1.5rem; border-radius: 8px;
+               box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+        h1 { color: #0d47a1; margin-top: 0; }
+        label { display: block; font-weight: 600; margin-top: 1rem; }
+        input, select { display: block; width: 100%; padding: .75rem; margin-top: .25rem; font-size: 1rem;
+                        min-height: 44px; border: 2px solid #999; border-radius: 4px; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #0d47a1; outline: none; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .field-error { color: #b71c1c; font-size: .85rem; margin-top: .25rem; min-height: 1rem; }
+        button { margin-top: 1.5rem; min-height: 48px; padding: .75rem 1.5rem; font-size: 1.1rem;
+                 background: #0d47a1; color: #fff; border: none; border-radius: 4px; cursor: pointer; width: 100%;
+                 font-weight: 600; }
+        button.secondary { background: #455a64; margin-top: .75rem; }
+        #tow-fields { display: none; padding: 1rem; background: #e3f2fd; border-radius: 4px; margin-top: 1rem; }
+        #tow-fields.visible { display: block; }
+        .ok { color: #1b5e20; }
+        .err { color: #b71c1c; }
+    </style>
+    <script src="/pwa-register.js" defer></script>
+</head>
+<body>
+<main>
+    <h1>Nový let</h1>
+    <form id="flight-form">
+        <label>Datum
+            <input type="text" name="date" required pattern="\d{2}-\d{2}-\d{4}" placeholder="DD-MM-YYYY" />
+            <span class="field-error" data-for="date"></span>
+        </label>
+
+        <label>Jméno pilota
+            <input type="text" name="pilotName" required maxlength="50" />
+            <span class="field-error" data-for="pilotName"></span>
+        </label>
+
+        <label>Imatrikulace kluzáku
+            <input type="text" name="gliderImmatriculation" required maxlength="20" autocomplete="off" list="airplane-list" />
+            <span class="field-error" data-for="gliderImmatriculation"></span>
+        </label>
+
+        <label>Typ kluzáku <small style="font-weight:400;color:#555">(jen pro nové hostující letadlo)</small>
+            <input type="text" name="gliderType" maxlength="100" placeholder="např. L-13 Blaník" />
+            <span class="field-error" data-for="gliderType"></span>
+        </label>
+
+        <datalist id="airplane-list"></datalist>
+
+        <label>Úkol letu
+            <input type="text" name="task" required maxlength="200" />
+            <span class="field-error" data-for="task"></span>
+        </label>
+
+        <div class="row">
+            <label>Čas startu (HH:mm)
+                <input type="text" name="takeoffTime" required pattern="\d{2}:\d{2}" />
+                <span class="field-error" data-for="takeoffTime"></span>
+            </label>
+            <label>Typ startu
+                <select name="startType" required>
+                    <option value="WINCH">Naviák</option>
+                    <option value="TOW">Motorové letadlo</option>
+                </select>
+            </label>
+        </div>
+
+        <div id="tow-fields">
+            <label>Pilot vlečného letadla
+                <input type="text" name="towPilotName" maxlength="50" />
+                <span class="field-error" data-for="towPilotName"></span>
+            </label>
+            <label>Imatrikulace vlečného letadla
+                <input type="text" name="towImmatriculation" maxlength="20" autocomplete="off" list="airplane-list" />
+                <span class="field-error" data-for="towImmatriculation"></span>
+            </label>
+            <label>Typ vlečného letadla <small style="font-weight:400;color:#555">(jen pro nové hostující letadlo)</small>
+                <input type="text" name="towType" maxlength="100" placeholder="např. Zlín Z-42M" />
+                <span class="field-error" data-for="towType"></span>
+            </label>
+        </div>
+
+        <button type="submit">Uložit let</button>
+        <button type="button" class="secondary" id="logout">Odhlásit se</button>
+    </form>
+    <p id="status" role="status"></p>
+</main>
+<script>
+const form = document.getElementById('flight-form');
+const statusBox = document.getElementById('status');
+const towWrap = document.getElementById('tow-fields');
+
+// Default date to today.
+form.date.value = new Date().toLocaleDateString('cs-CZ').replaceAll(/\.\s?/g, '-').replace(/-$/, '');
+
+// Populate aircraft autocomplete from /airplane (club aircraft).
+fetch('/airplane', { credentials: 'include' })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (list) {
+        var dl = document.getElementById('airplane-list');
+        if (!dl || !Array.isArray(list)) return;
+        list.forEach(function (a) {
+            var opt = document.createElement('option');
+            opt.value = a.immatriculation || '';
+            opt.label = a.type || '';
+            dl.appendChild(opt);
+        });
+    })
+    .catch(function () { /* offline / unauthorized – ignore */ });
+
+form.startType.addEventListener('change', () => {
+    towWrap.classList.toggle('visible', form.startType.value === 'TOW');
+});
+
+function clearErrors() {
+    document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
+    statusBox.textContent = '';
+    statusBox.className = '';
+}
+
+form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    clearErrors();
+    const body = Object.fromEntries(new FormData(form).entries());
+    if (body.startType !== 'TOW') { delete body.towPilotName; delete body.towImmatriculation; delete body.towType; }
+    if (!body.gliderType) delete body.gliderType;
+    if (!body.towType) delete body.towType;
+    try {
+        const resp = await fetch('/api/writer/flights', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (resp.status === 202) {
+            statusBox.textContent = 'Let uložen lokálně - bude odeslán po obnovení připojení.';
+            statusBox.className = 'ok'; form.reset(); return;
+        }
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+            if (data.fieldErrors) {
+                Object.entries(data.fieldErrors).forEach(([f, m]) => {
+                    const el = document.querySelector(`[data-for="${f}"]`);
+                    if (el) el.textContent = m;
+                });
+            }
+            statusBox.textContent = data.message || 'Nepodařilo se uložit let.';
+            statusBox.className = 'err';
+            return;
+        }
+        statusBox.textContent = data.degraded ? (data.degradedMessage || 'Uloženo (data nemusí být aktuální).') : 'Let uložen.';
+        statusBox.className = 'ok'; form.reset();
+        form.date.value = new Date().toLocaleDateString('cs-CZ').replaceAll(/\.\s?/g, '-').replace(/-$/, '');
+    } catch (err) {
+        statusBox.textContent = 'Nelze se připojit k serveru.'; statusBox.className = 'err';
+    }
+});
+
+document.getElementById('logout').addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.location.href = '/login.html';
+});
+</script>
+</body>
+</html>

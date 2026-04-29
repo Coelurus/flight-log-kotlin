@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+logging:
+  level:
+    root: INFO
+    eu.profinit.flightlog: TRACE
+    org.hibernate.SQL: DEBUG
+
+flightlog:
+  seed-test-data: true
