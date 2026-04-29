@@ -55,6 +55,11 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
     testImplementation("org.testcontainers:postgresql:1.20.4")
     testImplementation("com.h2database:h2")
+
+    // Kotest + MockK for new unit-test suite
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.mockk:mockk:1.13.13")
 }
 
 tasks.withType<KotlinCompile> {
@@ -65,6 +70,22 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+/**
+ * Fast unit-test task used by CI. Excludes Spring-Boot integration tests
+ * (anything ending in `IT`) so the `Backend CI` workflow stays hermetic
+ * and quick.
+ */
+tasks.register<Test>("unitTest") {
+    description = "Runs Kotest + Mockito unit tests (no Spring Boot context)."
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    filter {
+        excludeTestsMatching("*IT")
+    }
 }
 
 // Allopen so JPA entities and Spring beans can be proxied
