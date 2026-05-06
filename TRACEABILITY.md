@@ -1,6 +1,6 @@
-# Traceability — FlightLog (Kotlin)
+# Traceability — FlightLog
 
-Maps every requirement from `../docs.txt` to the implementing files / tests.
+Maps every requirement to the implementing files and tests.
 
 ## Functional requirements
 
@@ -42,8 +42,7 @@ Maps every requirement from `../docs.txt` to the implementing files / tests.
 
 ## Known follow-ups
 
-- `[FlightLog]` Replace in-memory `pendingImports` / `ExportJobRegistry` with Redis when running >1 replica (see NFR-12 caveat).
-- `[FlightLog]` Send password-reset emails (currently logged at INFO).
-- `[FlightLog]` Hook a real CAPTCHA provider (`captchaToken` is currently only checked for non-blankness).
-- `[FlightLog]` Add Cypress / Playwright e2e for the offline-replay flow described under NFR-04.
-- `[FlightLog]` Replace JPA `ddl-auto: update` with Flyway migrations once schema stabilises.
+- Replace in-memory `pendingImports` / `ExportJobRegistry` with Redis when running >1 replica (see NFR-12 caveat).
+- Send password-reset emails (currently logged at INFO).
+- Hook a real CAPTCHA provider (`captchaToken` is currently only checked for non-blankness).
+- Add Cypress / Playwright e2e for the offline-replay flow described under NFR-04.

@@ -8,7 +8,7 @@
 - Health probe: `GET /actuator/health` (open). Metrics: `GET /actuator/metrics`
   (admin-only).
 
-## 2. Backups (NFR-13)
+## 2. Backups
 
 ```bash
 0 2 * * *  pg_dump -Fc flightlog | gzip > /backups/flightlog-$(date +\%F).dump.gz
