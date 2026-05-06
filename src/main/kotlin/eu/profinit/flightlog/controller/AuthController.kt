@@ -37,7 +37,19 @@ data class PasswordResetConfirm(
 @RequestMapping("/api/auth")
 class AuthController(
     private val auth: AuthService,
+    private val users: eu.profinit.flightlog.repository.jpa.UserAccountJpa,
 ) {
+
+    @org.springframework.web.bind.annotation.GetMapping("/me")
+    fun me(): ResponseEntity<LoginResponse> {
+        val ctx = SecurityContextHolder.getContext().authentication
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        if (!ctx.isAuthenticated || ctx.name == "anonymousUser")
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val account = users.findFirstByEmailIgnoreCase(ctx.name)
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return ResponseEntity.ok(LoginResponse(account.email, account.displayName, account.role))
+    }
 
     @PostMapping("/login")
     fun login(@RequestBody body: LoginRequest, request: HttpServletRequest): LoginResponse =

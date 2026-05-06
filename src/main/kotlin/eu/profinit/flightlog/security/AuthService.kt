@@ -160,3 +160,36 @@ class DefaultUserSeeder(
         }
     }
 }
+
+/**
+ * Seeds demo club airplanes if the club_airplanes table is empty.
+ * Replace these with your real fleet via SQL or the admin interface.
+ */
+@org.springframework.stereotype.Component
+class DefaultAirplaneSeeder(
+    private val clubAirplaneJpa: eu.profinit.flightlog.repository.jpa.ClubAirplaneJpa,
+) : org.springframework.boot.ApplicationRunner {
+    override fun run(args: org.springframework.boot.ApplicationArguments?) {
+        if (clubAirplaneJpa.count() > 0L) return
+        clubAirplaneJpa.saveAll(
+            listOf(
+                eu.profinit.flightlog.repository.entity.ClubAirplane().apply {
+                    immatriculation = "OK-V23424"
+                    airplaneType = eu.profinit.flightlog.repository.entity.AirplaneType().apply { type = "Zlín Z-42M" }
+                },
+                eu.profinit.flightlog.repository.entity.ClubAirplane().apply {
+                    immatriculation = "OK-B123"
+                    airplaneType = eu.profinit.flightlog.repository.entity.AirplaneType().apply { type = "L-13A Blaník" }
+                },
+                eu.profinit.flightlog.repository.entity.ClubAirplane().apply {
+                    immatriculation = "OK-G456"
+                    airplaneType = eu.profinit.flightlog.repository.entity.AirplaneType().apply { type = "ASK-21" }
+                },
+                eu.profinit.flightlog.repository.entity.ClubAirplane().apply {
+                    immatriculation = "OK-T789"
+                    airplaneType = eu.profinit.flightlog.repository.entity.AirplaneType().apply { type = "Z-226MS" }
+                },
+            )
+        )
+    }
+}

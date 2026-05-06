@@ -9,37 +9,55 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, sans-serif; background: #fafafa; color: #111; margin: 0; padding: 1rem; }
-        main { max-width: 640px; margin: 0 auto; background: #fff; padding: 1.5rem; border-radius: 8px;
+        main { max-width: 700px; margin: 0 auto; background: #fff; padding: 1.5rem; border-radius: 8px;
                box-shadow: 0 4px 16px rgba(0,0,0,.08); }
-        h1 { color: #0d47a1; margin-top: 0; }
-        label { display: block; font-weight: 600; margin-top: 1rem; }
-        input, select { display: block; width: 100%; padding: .75rem; margin-top: .25rem; font-size: 1rem;
-                        min-height: 44px; border: 2px solid #999; border-radius: 4px; background: #fff; }
-        input:focus, select:focus { border-color: #0d47a1; outline: none; box-shadow: 0 0 0 3px rgba(13,71,161,.15); }
-        input:invalid:not(:placeholder-shown) { border-color: #b71c1c; }
+        h2 { text-align: center; margin: 1.5rem 0 .75rem; font-size: 1.2rem; color: #333; }
+        h3 { text-align: center; margin: 1rem 0 .5rem; font-size: 1rem; color: #555; }
+        label { display: block; font-size: .85rem; font-weight: 600; margin-top: .75rem; color: #555; }
+        input, select { display: block; width: 100%; padding: .6rem; margin-top: .25rem; font-size: 1rem;
+                        min-height: 44px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+        input:focus, select:focus { border-color: #1976d2; outline: none; box-shadow: 0 0 0 2px rgba(25,118,210,.15); }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .field-error { color: #b71c1c; font-size: .85rem; margin-top: .25rem; min-height: 1rem; display: block; }
-        .hint { display: block; color: #666; font-weight: 400; font-size: .8rem; margin-top: .15rem; }
-        button { margin-top: 1.5rem; min-height: 48px; padding: .75rem 1.5rem; font-size: 1.1rem;
-                 background: #0d47a1; color: #fff; border: none; border-radius: 4px; cursor: pointer; width: 100%;
-                 font-weight: 600; }
-        button.secondary { background: #455a64; margin-top: .75rem; }
-        button.success { background: #1b5e20; }
-        button[disabled] { background: #999; cursor: not-allowed; }
-        #tow-fields { display: none; padding: 1rem; background: #e3f2fd; border-radius: 4px; margin-top: 1rem; }
-        #tow-fields.visible { display: block; }
+        .field-error { color: #b71c1c; font-size: .8rem; margin-top: .2rem; min-height: .9rem; display: block; }
+
+        /* Toggle buttons */
+        .toggle-group { display: inline-flex; gap: 0; margin: .5rem 0; }
+        .toggle-group button {
+            padding: .5rem 1rem; font-size: .85rem; font-weight: 600; border: 1px solid #1976d2;
+            background: #fff; color: #1976d2; cursor: pointer; min-height: 36px;
+        }
+        .toggle-group button:first-child { border-radius: 4px 0 0 4px; }
+        .toggle-group button:last-child { border-radius: 0 4px 4px 0; }
+        .toggle-group button:not(:first-child):not(:last-child) { border-radius: 0; border-left: none; border-right: none; }
+        .toggle-group button.active { background: #1976d2; color: #fff; }
+
+        /* Tabs */
         .tabs { display: flex; gap: .25rem; margin-bottom: 1rem; border-bottom: 2px solid #e0e0e0; }
         .tabs button { flex: 1; margin: 0; padding: .75rem .5rem; font-size: 1rem; min-height: 44px;
-                       background: #eceff1; color: #455a64; border-radius: 4px 4px 0 0; font-weight: 600; }
-        .tabs button.active { background: #0d47a1; color: #fff; }
+                       background: #eceff1; color: #455a64; border: none; border-radius: 4px 4px 0 0; font-weight: 600; cursor: pointer; }
+        .tabs button.active { background: #1976d2; color: #fff; }
         .panel { display: none; }
         .panel.active { display: block; }
+
+        /* Submit */
+        button[type="submit"], button.primary {
+            margin-top: 1.5rem; min-height: 48px; padding: .75rem 1.5rem; font-size: 1.1rem;
+            background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: 600;
+        }
+        button.secondary { background: #455a64; color: #fff; border: none; border-radius: 4px; padding: .6rem 1rem;
+                           margin-top: .75rem; width: 100%; min-height: 44px; cursor: pointer; font-weight: 600; }
+        button.success { background: #1b5e20; color: #fff; border: none; border-radius: 4px; padding: .75rem 1.5rem;
+                         width: 100%; min-height: 48px; cursor: pointer; font-weight: 600; margin-top: 1.5rem; }
+        button[disabled] { background: #999 !important; cursor: not-allowed; }
+
         .open-flight { background: #fff3e0; border: 2px solid #ef6c00; border-radius: 6px;
                        padding: 1rem; margin-bottom: 1rem; }
-        .open-flight h2 { margin: 0 0 .5rem; color: #e65100; font-size: 1.1rem; }
+        .open-flight h2 { margin: 0 0 .5rem; color: #e65100; font-size: 1.1rem; text-align: left; }
         .open-flight dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .25rem .75rem; font-size: .9rem; }
         .open-flight dt { font-weight: 600; color: #555; }
         .open-flight dd { margin: 0; }
+
+        .hidden { display: none !important; }
 
         /* Toast */
         #toast {
@@ -52,14 +70,13 @@
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         #toast.ok    { background: #1b5e20; }
         #toast.err   { background: #b71c1c; }
-        #toast.info  { background: #0d47a1; }
+        #toast.info  { background: #1976d2; }
         .spinner {
             width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.35);
             border-top-color: #fff; border-radius: 50%;
             animation: spin .9s linear infinite; flex: 0 0 auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .form-busy { position: relative; pointer-events: none; opacity: .6; }
     </style>
     <script src="/pwa-register.js" defer></script>
@@ -73,78 +90,141 @@
 
     <!-- ============================== NEW FLIGHT ============================== -->
     <section id="panel-new" class="panel active" role="tabpanel">
-        <h1>Nový let</h1>
         <p id="open-blocker" class="field-error" style="display:none">
             Máte rozletěný let — nejprve jej ukončete přistáním.
         </p>
         <form id="flight-form" novalidate>
-            <label>Datum
-                <input type="date" name="date" required />
-                <span class="field-error" data-for="date"></span>
-            </label>
+            <!-- Top row: datetime + task -->
+            <div class="row">
+                <div>
+                    <label for="f-datetime">Čas vzletu</label>
+                    <input type="datetime-local" id="f-datetime" name="datetime" required />
+                    <span class="field-error" data-for="datetime"></span>
+                </div>
+                <div>
+                    <label for="f-task">Úloha</label>
+                    <input type="text" id="f-task" name="task" required maxlength="200" placeholder="Úloha" />
+                    <span class="field-error" data-for="task"></span>
+                </div>
+            </div>
 
-            <label>Jméno pilota
-                <input type="text" name="pilotName" required maxlength="50" autocomplete="off" list="pilot-list" />
-                <span class="hint">Začněte psát – nabídneme členy klubu.</span>
-                <span class="field-error" data-for="pilotName"></span>
-            </label>
-            <datalist id="pilot-list"></datalist>
+            <!-- ==================== VLEČNÁ (Tow plane) ==================== -->
+            <h2>Vlečná</h2>
 
-            <label>Imatrikulace kluzáku
-                <input type="text" name="gliderImmatriculation" required maxlength="20" autocomplete="off"
-                       list="airplane-list" style="text-transform:uppercase" />
-                <span class="hint">Začněte psát – nabídneme letadla klubu.</span>
-                <span class="field-error" data-for="gliderImmatriculation"></span>
-            </label>
+            <div class="toggle-group" data-toggle="towAirplaneMode">
+                <button type="button" class="active" data-value="club">Klubové</button>
+                <button type="button" data-value="private">Soukromé</button>
+            </div>
 
-            <label>Typ kluzáku <span class="hint" style="display:inline">(jen pro nové hostující letadlo)</span>
-                <input type="text" name="gliderType" maxlength="100" placeholder="např. L-13 Blaník" />
-                <span class="field-error" data-for="gliderType"></span>
-            </label>
+            <div id="tow-airplane-club">
+                <label for="tow-airplane-select">Letadlo klubu</label>
+                <select id="tow-airplane-select" name="towAirplaneSelect">
+                    <option value="">— vyberte —</option>
+                </select>
+                <span class="field-error" data-for="towAirplaneSelect"></span>
+            </div>
+            <div id="tow-airplane-private" class="hidden">
+                <label for="tow-airplane-imm">Imatrikulace</label>
+                <input type="text" id="tow-airplane-imm" name="towImmatriculation" maxlength="20" style="text-transform:uppercase" placeholder="OK-XXXXX" />
+                <label for="tow-airplane-type">Typ letadla</label>
+                <input type="text" id="tow-airplane-type" name="towType" maxlength="100" placeholder="např. Zlín Z-42M" />
+                <span class="field-error" data-for="towImmatriculation"></span>
+            </div>
 
-            <datalist id="airplane-list"></datalist>
+            <h3>Pilot</h3>
+            <div class="toggle-group" data-toggle="towPilotMode">
+                <button type="button" class="active" data-value="member">Člen klubu</button>
+                <button type="button" data-value="guest">Host</button>
+            </div>
 
-            <label>Úkol letu
-                <input type="text" name="task" required maxlength="200" />
-                <span class="field-error" data-for="task"></span>
-            </label>
+            <div id="tow-pilot-member">
+                <select id="tow-pilot-select" name="towPilotSelect">
+                    <option value="">— vyberte —</option>
+                </select>
+                <span class="field-error" data-for="towPilotSelect"></span>
+            </div>
+            <div id="tow-pilot-guest" class="hidden">
+                <input type="text" name="towPilotName" maxlength="50" placeholder="Jméno pilota" />
+                <span class="field-error" data-for="towPilotName"></span>
+            </div>
 
             <div class="row">
-                <label>Čas startu
-                    <input type="time" name="takeoffTime" required />
-                    <span class="field-error" data-for="takeoffTime"></span>
-                </label>
-                <label>Typ startu
-                    <select name="startType" required>
-                        <option value="WINCH">Naviák</option>
-                        <option value="TOW">Motorové letadlo</option>
+                <div>
+                    <label>Kopilot</label>
+                    <select id="tow-copilot-select" name="towCopilotSelect">
+                        <option value="">Bez kopilota</option>
                     </select>
-                </label>
+                </div>
+                <div>
+                    <label for="tow-note">Poznámka</label>
+                    <input type="text" id="tow-note" name="towNote" maxlength="200" placeholder="Poznámka" />
+                </div>
             </div>
 
-            <div id="tow-fields">
-                <label>Pilot vlečného letadla
-                    <input type="text" name="towPilotName" maxlength="50" autocomplete="off" list="pilot-list" />
-                    <span class="field-error" data-for="towPilotName"></span>
-                </label>
-                <label>Imatrikulace vlečného letadla
-                    <input type="text" name="towImmatriculation" maxlength="20" autocomplete="off"
-                           list="airplane-list" style="text-transform:uppercase" />
-                    <span class="field-error" data-for="towImmatriculation"></span>
-                </label>
-                <label>Typ vlečného letadla <span class="hint" style="display:inline">(jen pro nové hostující letadlo)</span>
-                    <input type="text" name="towType" maxlength="100" placeholder="např. Zlín Z-42M" />
-                    <span class="field-error" data-for="towType"></span>
-                </label>
+            <!-- ==================== KLUZÁK (Glider) ==================== -->
+            <h2>Kluzák</h2>
+
+            <div class="toggle-group" data-toggle="gliderAirplaneMode">
+                <button type="button" class="active" data-value="club">Klubové</button>
+                <button type="button" data-value="private">Soukromé</button>
+                <button type="button" data-value="none">Žádné</button>
             </div>
 
-            <button type="submit" id="save-btn">Uložit let</button>
+            <div id="glider-airplane-club">
+                <label for="glider-airplane-select">Letadlo klubu</label>
+                <select id="glider-airplane-select" name="gliderAirplaneSelect">
+                    <option value="">— vyberte —</option>
+                </select>
+                <span class="field-error" data-for="gliderAirplaneSelect"></span>
+            </div>
+            <div id="glider-airplane-private" class="hidden">
+                <label for="glider-airplane-imm">Imatrikulace</label>
+                <input type="text" id="glider-airplane-imm" name="gliderImmatriculation" maxlength="20" style="text-transform:uppercase" placeholder="OK-XXXXX" />
+                <label for="glider-airplane-type">Typ letadla</label>
+                <input type="text" id="glider-airplane-type" name="gliderType" maxlength="100" placeholder="např. L-13 Blaník" />
+                <span class="field-error" data-for="gliderImmatriculation"></span>
+            </div>
+            <div id="glider-airplane-none" class="hidden"></div>
+
+            <div id="glider-pilot-section">
+                <h3>Pilot</h3>
+                <div class="toggle-group" data-toggle="gliderPilotMode">
+                    <button type="button" class="active" data-value="member">Člen klubu</button>
+                    <button type="button" data-value="guest">Host</button>
+                </div>
+
+                <div id="glider-pilot-member">
+                    <select id="glider-pilot-select" name="gliderPilotSelect">
+                        <option value="">— vyberte —</option>
+                    </select>
+                    <span class="field-error" data-for="gliderPilotSelect"></span>
+                </div>
+                <div id="glider-pilot-guest" class="hidden">
+                    <input type="text" name="gliderPilotName" maxlength="50" placeholder="Jméno pilota" />
+                    <span class="field-error" data-for="gliderPilotName"></span>
+                </div>
+
+                <div class="row">
+                    <div>
+                        <label>Kopilot</label>
+                        <select id="glider-copilot-select" name="gliderCopilotSelect">
+                            <option value="">Bez kopilota</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="glider-note">Poznámka</label>
+                        <input type="text" id="glider-note" name="gliderNote" maxlength="200" placeholder="Poznámka" />
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="save-btn">Start</button>
         </form>
     </section>
 
     <!-- ============================== LAND ============================== -->
     <section id="panel-land" class="panel" role="tabpanel">
-        <h1>Přistát</h1>
+        <h2 style="text-align:left">Přistát</h2>
         <div id="no-open" style="display:none">
             <p>Aktuálně nemáte žádný rozletěný let.</p>
         </div>
@@ -176,7 +256,6 @@
 
 const form = document.getElementById('flight-form');
 const landForm = document.getElementById('land-form');
-const towWrap = document.getElementById('tow-fields');
 const tabNew = document.getElementById('tab-new');
 const tabLand = document.getElementById('tab-land');
 const panelNew = document.getElementById('panel-new');
@@ -190,6 +269,16 @@ const toast = document.getElementById('toast');
 
 let openFlight = null;
 let toastTimer = null;
+let clubMembers = [];
+let clubAirplanes = [];
+
+// Toggle state
+const toggleState = {
+    towAirplaneMode: 'club',
+    towPilotMode: 'member',
+    gliderAirplaneMode: 'club',
+    gliderPilotMode: 'member',
+};
 
 function showToast(msg, kind, opts) {
     opts = opts || {};
@@ -216,52 +305,124 @@ function nowHHmm() {
     const d = new Date();
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
+function nowDatetimeLocal() {
+    return todayISO() + 'T' + nowHHmm();
+}
 function isoToCz(iso) {
-    // YYYY-MM-DD -> DD-MM-YYYY (server expects this)
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
     return m ? (m[3] + '-' + m[2] + '-' + m[1]) : iso;
 }
 
-form.date.value = todayISO();
-form.takeoffTime.value = nowHHmm();
-// Don't allow future dates - typo prevention
-form.date.max = todayISO();
+// Set initial datetime
+document.getElementById('f-datetime').value = nowDatetimeLocal();
 
-// --- Pilots autocomplete (club members) ---
+// ==================== Toggle logic ====================
+document.querySelectorAll('.toggle-group').forEach(function (group) {
+    const key = group.dataset.toggle;
+    group.querySelectorAll('button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            group.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            toggleState[key] = btn.dataset.value;
+            updateVisibility();
+        });
+    });
+});
+
+function updateVisibility() {
+    // Tow airplane
+    document.getElementById('tow-airplane-club').classList.toggle('hidden', toggleState.towAirplaneMode !== 'club');
+    document.getElementById('tow-airplane-private').classList.toggle('hidden', toggleState.towAirplaneMode !== 'private');
+
+    // Tow pilot
+    document.getElementById('tow-pilot-member').classList.toggle('hidden', toggleState.towPilotMode !== 'member');
+    document.getElementById('tow-pilot-guest').classList.toggle('hidden', toggleState.towPilotMode !== 'guest');
+
+    // Glider airplane
+    document.getElementById('glider-airplane-club').classList.toggle('hidden', toggleState.gliderAirplaneMode !== 'club');
+    document.getElementById('glider-airplane-private').classList.toggle('hidden', toggleState.gliderAirplaneMode !== 'private');
+    document.getElementById('glider-airplane-none').classList.toggle('hidden', toggleState.gliderAirplaneMode !== 'none');
+
+    // Glider pilot section hidden if no glider
+    document.getElementById('glider-pilot-section').classList.toggle('hidden', toggleState.gliderAirplaneMode === 'none');
+
+    // Glider pilot
+    document.getElementById('glider-pilot-member').classList.toggle('hidden', toggleState.gliderPilotMode !== 'member');
+    document.getElementById('glider-pilot-guest').classList.toggle('hidden', toggleState.gliderPilotMode !== 'guest');
+}
+
+// ==================== Data loading ====================
+function populateMemberSelects(members) {
+    const selects = [
+        document.getElementById('tow-pilot-select'),
+        document.getElementById('tow-copilot-select'),
+        document.getElementById('glider-pilot-select'),
+        document.getElementById('glider-copilot-select'),
+    ];
+    selects.forEach(function (sel) {
+        const firstOpt = sel.querySelector('option');
+        sel.innerHTML = '';
+        sel.appendChild(firstOpt);
+        members.forEach(function (p) {
+            const name = [p.firstName, p.lastName].filter(Boolean).join(' ').trim();
+            if (!name) return;
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+        });
+    });
+}
+
+// Filter copilot options to exclude selected pilot
+function setupCopilotFiltering(pilotSelect, copilotSelect) {
+    pilotSelect.addEventListener('change', function () {
+        const selected = pilotSelect.value;
+        Array.from(copilotSelect.options).forEach(function (opt) {
+            if (!opt.value) return; // skip "Bez kopilota"
+            opt.hidden = (opt.value === selected);
+            if (opt.hidden && opt.selected) copilotSelect.value = '';
+        });
+    });
+}
+setupCopilotFiltering(document.getElementById('tow-pilot-select'), document.getElementById('tow-copilot-select'));
+setupCopilotFiltering(document.getElementById('glider-pilot-select'), document.getElementById('glider-copilot-select'));
+
+function populateAirplaneSelects(airplanes) {
+    const selects = [
+        document.getElementById('tow-airplane-select'),
+        document.getElementById('glider-airplane-select'),
+    ];
+    selects.forEach(function (sel) {
+        const firstOpt = sel.querySelector('option');
+        sel.innerHTML = '';
+        sel.appendChild(firstOpt);
+        airplanes.forEach(function (a) {
+            const opt = document.createElement('option');
+            opt.value = a.immatriculation || '';
+            opt.textContent = (a.immatriculation || '') + (a.type ? ' (' + a.type + ')' : '');
+            sel.appendChild(opt);
+        });
+    });
+}
+
 fetch('/user', { credentials: 'include' })
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (list) {
-        const dl = document.getElementById('pilot-list');
-        if (!dl || !Array.isArray(list)) return;
-        list.forEach(function (p) {
-            const fullName = [p.firstName, p.lastName].filter(Boolean).join(' ').trim();
-            if (!fullName) return;
-            const opt = document.createElement('option');
-            opt.value = fullName;
-            dl.appendChild(opt);
-        });
+        clubMembers = Array.isArray(list) ? list : [];
+        populateMemberSelects(clubMembers);
     })
-    .catch(function () { /* offline / ignore */ });
+    .catch(function () {});
 
-// --- Airplanes autocomplete ---
 fetch('/airplane', { credentials: 'include' })
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (list) {
-        const dl = document.getElementById('airplane-list');
-        if (!dl || !Array.isArray(list)) return;
-        list.forEach(function (a) {
-            const opt = document.createElement('option');
-            opt.value = a.immatriculation || '';
-            opt.label = a.type || '';
-            dl.appendChild(opt);
-        });
+        clubAirplanes = Array.isArray(list) ? list : [];
+        populateAirplaneSelects(clubAirplanes);
     })
-    .catch(function () { /* offline / ignore */ });
+    .catch(function () {});
 
-form.startType.addEventListener('change', function () {
-    towWrap.classList.toggle('visible', form.startType.value === 'TOW');
-});
-
+// ==================== Tabs ====================
 function clearErrors(scope) {
     (scope || document).querySelectorAll('.field-error[data-for]').forEach(function (e) { e.textContent = ''; });
 }
@@ -276,6 +437,7 @@ function showTab(which) {
 tabNew.addEventListener('click', function () { showTab('new'); });
 tabLand.addEventListener('click', function () { showTab('land'); });
 
+// ==================== Open flight ====================
 async function refreshOpen() {
     try {
         const resp = await fetch('/api/writer/flights/my-open', { credentials: 'include' });
@@ -313,30 +475,67 @@ function renderOpen() {
     }
 }
 
-// Client-side validation
+// ==================== Validation & Submit ====================
+function getSelectedAirplane(section) {
+    if (section === 'tow') {
+        if (toggleState.towAirplaneMode === 'club') {
+            return { imm: form.towAirplaneSelect.value, type: null };
+        } else {
+            return { imm: (form.towImmatriculation.value || '').trim().toUpperCase(), type: (form.towType.value || '').trim() };
+        }
+    } else {
+        if (toggleState.gliderAirplaneMode === 'club') {
+            return { imm: form.gliderAirplaneSelect.value, type: null };
+        } else if (toggleState.gliderAirplaneMode === 'private') {
+            return { imm: (form.gliderImmatriculation.value || '').trim().toUpperCase(), type: (form.gliderType.value || '').trim() };
+        }
+        return null; // none
+    }
+}
+
+function getSelectedPilot(section) {
+    if (section === 'tow') {
+        if (toggleState.towPilotMode === 'member') return form.towPilotSelect.value;
+        return (form.towPilotName.value || '').trim();
+    } else {
+        if (toggleState.gliderPilotMode === 'member') return form.gliderPilotSelect.value;
+        return (form.gliderPilotName.value || '').trim();
+    }
+}
+
 function validateFlightForm() {
     clearErrors(form);
     let firstBad = null;
     function err(name, msg) {
         const el = form.querySelector('.field-error[data-for="' + name + '"]');
         if (el) el.textContent = msg;
-        if (!firstBad) firstBad = form.elements[name];
+        if (!firstBad) firstBad = form.querySelector('[name="' + name + '"]');
     }
-    const d = form.date.value;
-    if (!d) err('date', 'Zadejte datum.');
-    else if (d > todayISO()) err('date', 'Datum nesmí být v budoucnosti.');
 
-    if (!form.pilotName.value.trim()) err('pilotName', 'Zadejte jméno pilota.');
-    const imm = form.gliderImmatriculation.value.trim();
-    if (!imm) err('gliderImmatriculation', 'Zadejte imatrikulaci.');
+    if (!form.datetime.value) err('datetime', 'Zadejte čas vzletu.');
+    if (!form.task.value.trim()) err('task', 'Zadejte úlohu.');
 
-    if (!form.task.value.trim()) err('task', 'Zadejte úkol letu.');
-    if (!/^\d{2}:\d{2}$/.test(form.takeoffTime.value)) err('takeoffTime', 'Zadejte čas startu.');
+    // Tow airplane
+    const towAirplane = getSelectedAirplane('tow');
+    if (toggleState.towAirplaneMode === 'club' && !towAirplane.imm) err('towAirplaneSelect', 'Vyberte letadlo.');
+    if (toggleState.towAirplaneMode === 'private' && !towAirplane.imm) err('towImmatriculation', 'Zadejte imatrikulaci.');
 
-    if (form.startType.value === 'TOW') {
-        if (!form.towPilotName.value.trim()) err('towPilotName', 'Zadejte pilota vlečné.');
-        if (!form.towImmatriculation.value.trim()) err('towImmatriculation', 'Zadejte imatrikulaci vlečné.');
+    // Tow pilot
+    const towPilot = getSelectedPilot('tow');
+    if (toggleState.towPilotMode === 'member' && !towPilot) err('towPilotSelect', 'Vyberte pilota.');
+    if (toggleState.towPilotMode === 'guest' && !towPilot) err('towPilotName', 'Zadejte jméno pilota.');
+
+    // Glider
+    if (toggleState.gliderAirplaneMode !== 'none') {
+        const gliderAirplane = getSelectedAirplane('glider');
+        if (toggleState.gliderAirplaneMode === 'club' && !gliderAirplane.imm) err('gliderAirplaneSelect', 'Vyberte letadlo.');
+        if (toggleState.gliderAirplaneMode === 'private' && !gliderAirplane.imm) err('gliderImmatriculation', 'Zadejte imatrikulaci.');
+
+        const gliderPilot = getSelectedPilot('glider');
+        if (toggleState.gliderPilotMode === 'member' && !gliderPilot) err('gliderPilotSelect', 'Vyberte pilota.');
+        if (toggleState.gliderPilotMode === 'guest' && !gliderPilot) err('gliderPilotName', 'Zadejte jméno pilota.');
     }
+
     if (firstBad) { firstBad.focus(); return false; }
     return true;
 }
@@ -352,20 +551,33 @@ form.addEventListener('submit', async function (ev) {
         showToast('Zkontrolujte vyplněná pole.', 'err');
         return;
     }
-    const raw = Object.fromEntries(new FormData(form).entries());
+
+    // Parse datetime
+    const dt = form.datetime.value; // "YYYY-MM-DDTHH:MM"
+    const datePart = dt.substring(0, 10);
+    const timePart = dt.substring(11, 16);
+
+    const towAirplane = getSelectedAirplane('tow');
+    const towPilot = getSelectedPilot('tow');
+    const gliderAirplane = getSelectedAirplane('glider');
+    const gliderPilot = toggleState.gliderAirplaneMode !== 'none' ? getSelectedPilot('glider') : null;
+
     const body = {
-        date: isoToCz(raw.date),
-        pilotName: raw.pilotName.trim(),
-        gliderImmatriculation: raw.gliderImmatriculation.trim().toUpperCase(),
-        task: raw.task.trim(),
-        takeoffTime: raw.takeoffTime,
-        startType: raw.startType,
+        date: isoToCz(datePart),
+        takeoffTime: timePart,
+        task: form.task.value.trim(),
+        startType: 'TOW',
+        pilotName: gliderPilot || towPilot,
+        gliderImmatriculation: gliderAirplane ? gliderAirplane.imm : towAirplane.imm,
+        towPilotName: towPilot,
+        towImmatriculation: towAirplane.imm,
     };
-    if (raw.gliderType && raw.gliderType.trim()) body.gliderType = raw.gliderType.trim();
-    if (raw.startType === 'TOW') {
-        body.towPilotName = (raw.towPilotName || '').trim();
-        body.towImmatriculation = (raw.towImmatriculation || '').trim().toUpperCase();
-        if (raw.towType && raw.towType.trim()) body.towType = raw.towType.trim();
+    if (towAirplane.type) body.towType = towAirplane.type;
+    if (gliderAirplane && gliderAirplane.type) body.gliderType = gliderAirplane.type;
+    if (!gliderAirplane) {
+        // No glider - tow-only flight
+        body.gliderImmatriculation = towAirplane.imm;
+        body.startType = 'WINCH';
     }
 
     saveBtn.disabled = true;
@@ -379,7 +591,7 @@ form.addEventListener('submit', async function (ev) {
         });
         if (resp.status === 202) {
             showToast('Offline – let bude odeslán po obnovení připojení.', 'ok');
-            form.reset(); form.date.value = todayISO(); form.takeoffTime.value = nowHHmm();
+            resetForm();
             return;
         }
         const data = await resp.json().catch(function () { return {}; });
@@ -394,7 +606,7 @@ form.addEventListener('submit', async function (ev) {
             return;
         }
         showToast(data.degradedMessage || 'Let uložen.', 'ok');
-        form.reset(); form.date.value = todayISO(); form.takeoffTime.value = nowHHmm();
+        resetForm();
         await refreshOpen();
     } catch (err) {
         showToast('Nelze se připojit k serveru.', 'err', { duration: 5000 });
@@ -404,6 +616,12 @@ form.addEventListener('submit', async function (ev) {
     }
 });
 
+function resetForm() {
+    form.reset();
+    document.getElementById('f-datetime').value = nowDatetimeLocal();
+}
+
+// ==================== Landing ====================
 landForm.addEventListener('submit', async function (ev) {
     ev.preventDefault();
     clearErrors(landForm);
@@ -460,6 +678,7 @@ document.getElementById('logout').addEventListener('click', async function () {
 window.addEventListener('online',  function () { showToast('Online', 'ok', { duration: 2000 }); });
 window.addEventListener('offline', function () { showToast('Offline – data se uloží lokálně.', 'info', { duration: 4000 }); });
 
+updateVisibility();
 refreshOpen();
 </script>
 </body>

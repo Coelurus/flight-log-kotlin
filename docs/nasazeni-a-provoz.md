@@ -701,6 +701,30 @@ spec:
 | `admin@flightlog.local` | `admin1234` | ADMIN |
 | `writer@flightlog.local` | `writer1234` | WRITER |
 
+### 11.2 Výchozí demo letadla
+
+Při prvním startu (pokud tabulka `club_airplanes` je prázdná) se automaticky vloží ukázková klubová letadla:
+
+| Imatrikulace | Typ |
+|---|---|
+| `OK-V23424` | Zlín Z-42M |
+| `OK-B123` | L-13A Blaník |
+| `OK-G456` | ASK-21 |
+| `OK-T789` | Z-226MS |
+
+> **Důležité:** Tato letadla jsou pouze demonstrační. Pro produkční provoz je nahraďte skutečnou flotilou přes SQL:
+>
+> ```sql
+> -- Smazání demo letadel
+> DELETE FROM club_airplanes;
+>
+> -- Vložení reálných letadel
+> INSERT INTO club_airplanes (immatriculation, airplane_type_id)
+> SELECT 'OK-1234', id FROM airplane_types WHERE type = 'Váš typ';
+> ```
+>
+> Případně upravte třídu `DefaultAirplaneSeeder` v kódu aplikace.
+
 ### 11.2 Změna hesla
 
 ```
