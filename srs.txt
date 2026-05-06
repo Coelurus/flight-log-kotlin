@@ -1,0 +1,761 @@
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 1
+Specifikace požadavků
+pro aplikaci
+FlightLog
+v1.0
+Anna Kmentová, Matěj Foukal, Šimon Jůza, Filip Vopálenský, Jiří Zelenka
+Tým A
+Šablona dle SRS template by Karl E. Wiegers – https://profinit.eu/univerzity/material-sweng/requirements/
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 2
+Obsah
+Obsah
+Obsah................................................................................................................................................ 2
+1 Úvod.............................................................................................................................................. 4
+1.1 Účel ........................................................................................................................................ 4
+1.2 Konvence dokumentu............................................................................................................ 4
+1.3 Cílové publikum ..................................................................................................................... 4
+1.4 Rozsah produktu .................................................................................................................... 5
+1.5 Přílohy a odkazy ..................................................................................................................... 5
+2 Celkový popis ................................................................................................................................ 6
+2.1 Perspektiva produktu ............................................................................................................ 6
+2.2 Seznam funkcí ........................................................................................................................ 6
+2.3 Architektura ........................................................................................................................... 7
+2.3.1 Konceptuální architektura .............................................................................................. 7
+2.3.2 Logická architektura ....................................................................................................... 7
+2.4 Typy uživatelů ........................................................................................................................ 8
+2.4.1 Zapisovatel ...................................................................................................................... 9
+2.4.2 Administrátor.................................................................................................................. 9
+2.5 Běhové prostředí ................................................................................................................... 9
+2.6 Designová a implementační omezení .................................................................................... 9
+2.7 Uživatelská dokumentace .................................................................................................... 10
+3 Popis rozhraní ............................................................................................................................. 13
+3.1 Uživatelské rozhraní ............................................................................................................ 13
+3.2 Externí rozhraní ................................................................................................................... 13
+3.2.1 API pilotů (ClubDB) ....................................................................................................... 13
+3.2.2 Export letů (CSV) ........................................................................................................... 14
+3.2.3 Import letů (CSV) .......................................................................................................... 14
+4 Funkční požadavky...................................................................................................................... 16
+FR-01: Přihlášení uživatele ......................................................................................................... 16
+FR-02: Offline režim (PWA)......................................................................................................... 16
+4.2 Zapisovatel ........................................................................................................................... 16
+FR-03: Vytvoření záznamu o letu............................................................................................ 17
+4.4 Administrátor....................................................................................................................... 17
+FR-04: Přehled letů ................................................................................................................. 18
+FR-05: Export letů do CSV ....................................................................................................... 18
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 3
+FR-06: Import letů z CSV ......................................................................................................... 19
+FR-07: Ruční zadávání letů ..................................................................................................... 19
+FR-08: Zpětná editace záznamů ............................................................................................. 19
+FR-09: Mazání záznamů .......................................................................................................... 20
+FR-10: Validace letadel ......................................................... Chyba! Záložka není definována.
+FR-14: Integrace s API pilotů .................................................................................................. 20
+FR-15: Správa uživatelů .......................................................................................................... 20
+4.5 Změny oproti nabídce.......................................................................................................... 20
+Změna zaznamenávání letu .................................................................................................... 21
+Změna správy uživatelů a rolí ................................................................................................. 21
+5 Nefunkční požadavky.................................................................................................................. 22
+NFR-01: Dostupnost ................................................................. Chyba! Záložka není definována.
+NFR-02: Výkon a odezva ........................................................... Chyba! Záložka není definována.
+NFR-03: Chování při nedostupném API .................................... Chyba! Záložka není definována.
+NFR-04: Offline režim ............................................................... Chyba! Záložka není definována.
+NFR-05: Bezpečnost komunikace ............................................. Chyba! Záložka není definována.
+NFR-06: Bezpečnost účtů ......................................................... Chyba! Záložka není definována.
+NFR-07: Řízení přístupu ............................................................ Chyba! Záložka není definována.
+NFR-08: Integrita dat ................................................................ Chyba! Záložka není definována.
+NFR-09: Audit a logování .......................................................... Chyba! Záložka není definována.
+NFR-10: Použitelnost ................................................................ Chyba! Záložka není definována.
+NFR-11: Kompatibilita .............................................................. Chyba! Záložka není definována.
+NFR-12: Škálovatelnost............................................................. Chyba! Záložka není definována.
+NFR-13: Zálohování .................................................................. Chyba! Záložka není definována.
+NFR-14: Lokální formáty ........................................................... Chyba! Záložka není definována.
+NFR-15: Chybové stavy a UX .................................................... Chyba! Záložka není definována.
+NFR-16: Správa uživatelů.......................................................... Chyba! Záložka není definována.
+Příloha A – Slovník pojmů a seznam zkratek .................................................................................. 27
+A.1 Pojmy ................................................................................................................................... 27
+A.2 Zkratky ................................................................................................................................. 27
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 4
+1 Úvod
+1.1 Účel
+Tento dokument představuje specifikaci požadavků (SRS) na webovou aplikaci FlightLog, jejímž
+cílem je nahradit stávající manuální evidenci letů na malém letišti moderním řešením pro
+elektronický záznam, správu a vyhodnocování letových dat. Dokument navazuje na schválenou
+nabídku ze dne 9. 3. 2026 a osobní prezentaci ze dne 11. 3. 2026 a podrobně rozpracovává
+funkční i nefunkční požadavky, které byly v nabídce identifikovány.
+Účelem dokumentu je poskytnout zadavateli i realizačnímu týmu jednotný a závazný popis toho,
+co bude součástí dodávky, a sloužit jako podklad pro návrh, implementaci, testování a akceptaci
+výsledného řešení.
+1.2 Konvence dokumentu
+Dokument používá následující konvence:
+• Funkční požadavky jsou označeny identifikátorem FR-XX (např. FR-01, FR-02), kde XX je
+pořadové číslo požadavku.
+• Nefunkční požadavky jsou označeny identifikátorem NFR-XX (např. NFR-01).
+• Tučné písmo zdůrazňuje klíčové pojmy a názvy polí formulářů.
+• Slova "musí", "má" a "může" jsou používána ve smyslu RFC 2119 - "musí" označuje
+povinný požadavek, "má" silně doporučený a "může" volitelný..
+Seznam zkratek a pojmů je uveden v Příloze A.
+1.3 Cílové publicum
+Dokument je určen následujícím skupinám čtenářů:
+• Zadavatel – (zástupci letiště) - pro ověření, že navržené řešení odpovídá jejich potřebám,
+a jako podklad pro akceptaci.
+• Projektový manažer a analytik – jako základ pro plánování, řízení změn a komunikaci se
+zadavatelem.
+• Vývojáři a integrační specialista – jako závazný popis toho, co má být implementováno.
+• Tester (QA) – jako podklad pro přípravu testovacích scénářů a akceptačních testů.
+Dokument je strukturován následovně. Kapitola 1 obsahuje úvodní informace a vymezení
+dokumentu. Kapitola 2 poskytuje celkový popis produktu, jeho perspektivu, uživatele a běhové
+prostředí. Kapitola 3 popisuje uživatelské a externí rozhraní aplikace. Kapitola 4 obsahuje
+detailní funkční požadavky rozdělené podle uživatelských rolí. Kapitola 5 definuje nefunkční
+požadavky. Doporučený způsob čtení je sekvenční pro zadavatele a analytiky, vývojáři mohou po
+prostudování kapitol 1 a 2 přejít přímo ke kapitolám 3 a 4.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 5
+1.4 Rozsah produktu
+FlightLog je webová aplikace typu PWA pro evidenci letů na malém letišti, určená zejména pro
+provoz s kluzáky a jejich vlečnými motorovými letadly. Aplikace pokrývá celý životní cyklus
+záznamu o letu — od jeho založení zapisovatelem, přes filtraci a export administrátorem až po
+jeho archivaci.
+Hlavní cíle aplikace:
+• Nahradit papírovou nebo manuální evidenci letů jednoduchým elektronickým rozhraním
+dostupným z mobilního zařízení i desktopu.
+• Poskytnout administrátorovi centralizovaný přehled nad všemi uskutečněnými i
+plánovanými lety, včetně možnosti filtrace, editace a exportu dat pro účetní a další
+administrativní účely.
+• Zajistit spolehlivý provoz i v podmínkách omezené konektivity přímo na letišti díky
+offline režimu.
+• Umožnit migraci historických dat prostřednictvím importního rozhraní.
+1.5 Přílohy a odkazy
+Přílohy tohoto dokumentu:
+• Příloha A - Slovník pojmů a seznam zkratek
+Související dokumenty:
+1. Nabídka na realizaci systému FlightLog, Tým A, verze ze dne 9. 3. 2026 — schválená
+obchodní nabídka, na kterou tato specifikace navazuje.
+2. RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels, dostupné na
+https://www.rfc-editor.org/rfc/rfc2119
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 6
+2 Celkový popis
+2.1 Perspektiva produktu
+Systém FlightLog je nový softwarový produkt navržený jako náhrada stávající papírové evidence
+letů.
+Jediným externím softwarovým systémem, se kterým FlightLog interaguje, je externí API pilotů
+(ClubDB), jejíž očekávaná funkcionalita je více popsaná v sekci 4.1.1.
+FlightLog nemá žádné veřejné rozhraní pro další systémy. Export a import dat je možný pouze
+pomocí nahrání nebo stáhnutí CSV souboru. Přesná specifikace tohoto formátu se nachází v sekci
+3.2.2.
+2.2 Seznam funkcí
+Níže je uveden přehled hlavních funkcí systému FlightLog s uvedením role, pro kterou je daná
+funkce určena (zapisovatel/administrátor).
+Funkce Popis Role
+Přihlášení a správa hesla Přihlášení e-mailem a heslem, změna hesla,
+obnova přes e-mail
+Zapisovatel,
+Administrátor
+Zaznamenání letu kluzáku Vyplnění data, imatrikulace a typu kluzáku,
+úkolu, času startu a přistání, typu startu a
+jména pilota
+Zapisovatel
+Zaznamenání letu vlekného
+letadla
+Vyplnění data, imatrikulace a typu letadla, úkolu,
+času startu a přistání, jména pilota a spárování
+s odpovídajícím letem kluzáku
+Zapisovatel
+Přehled a filtrování letů Tabulkový přehled všech letů s filtry (datum, typ,
+stav, doba letu aj.)
+Administrátor
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 7
+Export letů do CSV Export aktuálně filtrovaného přehledu letů ve
+stanoveném formátu CSV
+Administrátor
+Import letů z CSV Hromadné vložení historických záznamů ze
+souboru CSV
+Administrátor
+Editace potvrzených
+záznamů
+Zpětná úprava letových záznamů potvrzených
+pilotem kluzáku
+Administrátor
+Smazání záznamu letu Odstranění záznamu letu ze systému Administrátor
+Integrace s API pilotů Získání informací o pilotech z externího systému
+ClubDB
+Systém
+Validační pravidla zajišťovaná systémem při zadávání letu:
+• pokud je zadaný pilot v systému ClubDB, pak musím mít roli “PILOT”
+• čas přistání musí být pozdější než čas startu
+Systém dále automaticky doplňuje následující údaje:
+• Celkovou dobu letu (rozdíl času přistání a startu)
+• zda zadaný pilot je členem klubu (přes systém ClubDB), nebo je externista
+2.3 Architektura
+2.3.1 Konceptuální architektura
+Na nejvyšší úrovni systém FlightLog zahrnuje dva různé aktéry a dva softwarové systémy. Oba
+uživatelé (zapisovatel a administrátor) přistupují k systému výhradně prostřednictvím webové
+aplikace FlightLog. Administrátor navíc využívá export dat do souboru CSV, který slouží jako
+vstup pro externí zpracování (např. v Excelu pro účely účetnictví).
+Samotná aplikace FlightLog je integrována s externím API pilotů (ClubDB), ze kterého získává
+informace o členech klubu. Tato integrace je jednosměrná – FlightLog data pouze čte, nezapisuje
+do ClubDB.
+2.3.2 Logická architektura
+Z pohledu logické architektury je systém FlightLog rozdělen do tří vrstev: webový frontend, API
+backend a databáze. Uživatelé pracují s webovou aplikací (frontend), která odesílá požadavky na
+API backend zpracovávající veškerou business logiku.
+Frontend
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 8
+1. Modul Přihlašování: modul poskytuje rozhraní pro zadání přihlašovacích údajů, změnu
+hesla a obnovení hesla přes e-mail
+2. Modul Zapisování: modul poskytuje rozhraní zapsat nový let a jeho případné úpravy
+3. Modul Administrace: modul poskytuje rozhraní pro zobrazení a filtraci letů, jejich import
+a export.
+Backend
+1. Modul Přihlašování: modul validuje poskytnutá data oproti záznamům v databázi a
+zaloguje všechny akce.
+2. Modul Zapisování: modul zapíše (případně upraví/smaže) záznamy podle poskytnutých
+dat, zaloguje všechny akce a provede validační kontroly (včetně integrace s ClubDB)
+3. Modul Administrace: modul umožňuje hromadně pracovat se zapsanými lety - jejich
+zobrazení, filtrování, pracuje s importním a exportním CSV souborem a loguje všechny
+akce
+2.4 Typy uživatelů
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 9
+Systém FlightLog poskytuje 2 uživatele: zapisovatel a administrátor. Zapisovatel je zodpovědný
+za zapisování všech nových letů, zatímco administrátor má přístup ke všem zápisům naráz a k
+hromadným akcím s nimi.
+2.4.1 Zapisovatel
+Tento uživatel má přístup k modulů zapisování a přihlašování. Jeho úkolem je průběžně
+zaznamenávat informace o jednotlivých letech. Tento uživatel musí být jen základně technicky
+zdatný - k systému přistupuje přes mobil, tablet nebo počítač. Měl by mít přehld o dění na letišti
+a vyznat v typech letedel.
+2.4.2 Administrátor
+Tento uživatel má přístup k modulům přihlašování a administrace a je zodpovědný za celkový
+dohled nad daty v systému. Pravidelně využívá přehledovou tabulku všech letů s možností
+filtrování, exportuje data pro účetní zpracování a spravuje uživatelské účty. V případě potřeby
+může zpětně editovat nebo mazat záznamy letů a importovat historická data.
+Administrátor pracuje typicky na počítači v kancelářském prostředí, kde má stabilní internetové
+připojení a větší displej. Předpokládá se vyšší technická zdatnost v oblasti práce s daty
+(schopnost pracovat se soubory CSV a orientovat se v tabulkových přehledech).
+2.5 Běhové prostředí
+Aplikace FlightLog je navržena jako webová aplikace typu PWA (Progressive Web App),
+provozovaná v cloudovém prostředí a přístupná uživatelům prostřednictvím standardního
+webového prohlížeče. Pro plnou funkčnost — zejména synchronizaci dat, autentizaci a
+komunikaci s externím API pilotů — vyžaduje aktivní internetové připojení. V případě dočasného
+výpadku konektivity přechází klientská část do offline režimu a rozpracované záznamy
+synchronizuje automaticky po obnovení spojení (viz kapitola 3.1.3).
+2.5.1 Serverové prostředí
+Backend a databáze jsou provozovány v cloudové infrastruktuře dodavatele. Backend je
+realizován jako REST API služba, která komunikuje s relační databází a externím API pilotů.
+Konkrétní volba cloudové platformy (např. AWS, Azure nebo Oracle Cloud) bude upřesněna v
+rámci fáze návrhu architektury a nemá vliv na funkční chování aplikace z pohledu uživatele.
+2.5.2 Klientské prostředí — desktop
+Aplikace je optimalizována pro aktuální verze běžně používaných desktopových prohlížečů:
+Google Chrome, Mozilla Firefox, Microsoft Edge a Apple Safari (vždy v poslední a předposlední
+stabilní verzi). Minimální podporované rozlišení pro administrátorskou konzoli je 1280×720 px.
+2.5.3 Klientské prostředí — mobilní zařízení a tablety
+Pro mobilní použití je podporován operační systém iOS 15.0 a vyšší (Safari) a Android 10.0 a vyšší
+(Chrome). Minimální podporované rozlišení pro pilotní rozhraní je 360×640 px. Aplikaci lze na
+mobilním zařízení nainstalovat jako PWA a využívat ji v režimu podobném nativní aplikaci, včetně
+offline zápisu letů.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 10
+2.5.4 Externí systémy
+Aplikace integruje externí REST API pilotů (viz 4.1.1 pro očekávanou specifikaci systému). Za
+dostupnost a správnou funkčnost tohoto API odpovídá jeho provozovatel. V případě
+nedostupnosti aplikace využívá lokální cache mechanismus popsaný ve FR-13.
+2.6 Designová a implementační omezení
+V této kapitole jsou shrnuta omezení, která ovlivňují návrh, implementaci a provoz aplikace
+FlightLog. Tato omezení vyplývají jednak z charakteru samotného projektu (provoz na malém
+letišti, různorodost zařízení uživatelů), jednak ze závislostí na externích systémech a z dohod se
+zadavatelem.
+2.6.1 Architektonická a technologická omezení
+Aplikace musí být realizována jako webová PWA s responzivním uživatelským rozhraním, aby
+byla použitelná na desktopu, tabletu i mobilním zařízení bez nutnosti instalace nativní aplikace.
+Backend musí být implementován jako stateless REST API, aby umožňoval horizontální škálování
+a oddělené nasazení od klientské části. Pro perzistenci dat se použije relační databáze, která
+zajišťuje konzistenci a integritní omezení vyžadovaná modulem Správa letů.
+2.6.2 Omezení daná externími systémy
+Aplikace je závislá na externím API pilotů, jehož specifikace, datový model ani SLA nejsou pod
+kontrolou dodavatele. Z tohoto důvodu je v aplikaci implementován mechanismus krátkodobé i
+dlouhodobé cache (viz FR-13) a timeout 15 sekund s opakovanými pokusy. Jakákoliv změna
+externího API může vyžadovat úpravu integrační vrstvy.
+2.6.3 Omezení daná prostředím provozu
+Systém bude používán mimo jiné přímo na letišti, kde nelze garantovat stabilní internetové
+připojení. Klientská část proto musí fungovat i v offline režimu s následnou synchronizací (Service
+Worker, IndexedDB). Toto omezení významně ovlivňuje návrh klientské části — všechny akce
+kritické pro zapisovatele (zapsání informací o letu) musí být proveditelné offline.
+2.6.4 Bezpečnostní omezení
+Veškerá komunikace mezi klientem, backendem a externím API musí probíhat výhradně přes
+HTTPS. Hesla uživatelů musí být ukládána pouze v podobě bezpečného hashe (např. bcrypt,
+argon2). Přístup k jednotlivým funkcím je řízen na úrovni backendu na základě rolí uživatele
+(zapisovatel, administrátor); klientská část se na řízení přístupu nesmí spoléhat.
+2.6.5 Datová a formátová omezení
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 11
+Pro import a export dat je závazně použit formát CSV s oddělovačem středník, kódováním UTF-8,
+formátem data DD-MM-YYYY, formátem času HH:mm (24h) a desetinnou tečkou pro hodnoty
+doby letu. Jiné formáty (např. XLSX) nejsou součástí dodávky (viz kapitola 4.4.1).
+2.6.6 Omezení daná harmonogramem a rozsahem
+Nabídka byla schválena s pevně definovaným rozsahem 49 MD včetně záruky. Jakékoliv rozšíření
+funkčnosti nad rámec popsaný ve schválené nabídce a v této specifikaci vyžaduje samostatné
+objednání a může mít dopad na termín dodávky.
+2.7 Uživatelská dokumentace
+Součástí dodávky aplikace FlightLog bude sada uživatelské a provozní dokumentace, jejímž cílem
+je umožnit všem cílovým skupinám uživatelů samostatné a efektivní používání systému.
+Dokumentace bude vytvořena v českém jazyce.
+2.7.1 Uživatelská příručka pro zapisovatele
+Stručný dokument (předpoklad 5–10 stran) určený zapisovateli. Obsahuje popis přihlášení do
+aplikace, postup zadání letu, práci s offline režimem a řešení nejčastějších chybových stavů
+(např. neexistující pilot, nebo pilot se špatným oprávněním). Příručka je doplněna snímky
+obrazovek z mobilní i desktopové verze.
+2.7.2 Uživatelská příručka pro administrátora
+Samostatný dokument popisující administrátorské funkce: práci s přehledem letů a filtry, ruční
+zadání a editaci záznamů, mazání záznamů včetně řešení provázaných letů (vlek), import a
+export CSV souborů a správu uživatelů a jejich rolí. Příručka obsahuje také popis formátu CSV
+souboru pro import historických dat, stejně tak popis formátu CSV pro export dat do dalších
+systémů.
+2.7.3 Stručná provozní příručka („quick start")
+Jednostránkový dokument ve formátu PDF, který lze vytisknout a vyvěsit v prostorech letiště.
+Obsahuje vizuální návod na nejčastější akce — založení letu, zadání přistání, přihlášení — formou
+očíslovaných kroků a snímků obrazovek.
+2.7.4 Kontextová nápověda v aplikaci
+Klíčové formuláře (zejména formulář záznamu letu a formulář pro import CSV) budou doplněny
+o stručné nápovědy formou tooltipů a inline chybových hlášek u jednotlivých polí. Cílem je, aby
+uživatel ve většině případů nemusel sahat po samostatné příručce.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 12
+2.7.5 Provozní a instalační dokumentace
+Pro potřeby provozu a budoucí údržby bude dodavatelem předán technický popis nasazení
+aplikace, konfigurace prostředí, popis integrace s externím API pilotů a popis postupu pro
+obnovu ze zálohy. Tato dokumentace je určena provoznímu týmu, nikoli koncovým uživatelům.
+2.7.6 Forma a předání dokumentace
+Veškerá uživatelská dokumentace bude předána ve formátu PDF jako součást akceptace.
+Aktualizace dokumentace v záruční době jsou součástí záruční kapacity (3 MD) pouze v rozsahu
+odpovídajícím opraveným vadám.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 13
+3 Popis rozhraní
+3.1 Uživatelské rozhraní
+Aplikace FlightLog je webová aplikace s responzivním rozhraním přizpůsobeným pro použití na
+počítači, tabletu i mobilním zařízení. Podporované prohlížeče, operační systémy a minimální
+rozlišení obrazovky jsou specifikovány v sekci 2.5 Běhové prostředí aplikace.
+Rozhraní je navrženo s důrazem na jednoduchost a rychlost ovládání v terénních podmínkách
+letiště.
+Společné charakteristiky rozhraní:
+• Jazyk rozhraní je čeština.
+• Datumy jsou zobrazovány ve formátu DD. MM. YYYY, časy ve formátu HH:mm.
+• Vstupní bod aplikace je přihlašovací obrazovka. Po přihlášení je uživateli zobrazeno
+rozhraní odpovídající jeho roli.
+• Aplikace zobrazuje srozumitelné chybové hlášky při neúspěšné validaci vstupu nebo při
+nedostupnosti externích služeb.
+• Navigace mezi sekcemi aplikace je dostupná z každé obrazovky.
+• Webová apliakce je navžena jako PWA
+3.2 Externí rozhraní
+3.2.1 API pilotů (ClubDB)
+Systém FlightLog je integrován s externím REST API pilotů (ClubDB), ze kterého získává informace
+o registrovaných členech leteckého klubu. Tato integrace je jednosměrná — systém data pouze
+čte.
+Technické parametry:
+• Základní URL: http://vyuka.profinit.eu:8080/
+• Endpoint: GET /club/user
+• Protokol: HTTP REST, JSON
+• Struktura odpovědi:
+Pole Typ Popis
+memberId integer (long) Unikátní identifikátor člena
+firstName string Křestní jméno
+lastName string Příjmení
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 14
+roles pole řetězců Role v klubu: PILOT, BACKOFFICE
+Mapování: Systém přebírá memberId, firstName, lastName; roles používá k ověření oprávnění.
+Dostupnost: Za API odpovídá jeho provozovatel. Při nedostupnosti systém používá cache (viz FR-
+14).
+3.2.2 Export letů (CSV)
+Systém umožňuje administrátorovi exportovat záznamy o letech do souboru CSV. Exportují se
+záznamy odpovídající aktuálně nastaveným filtrům.
+Technické parametry souboru:
+• Formát: CSV, oddělovač: ; (středník), kódování: UTF-8
+• První řádek obsahuje názvy sloupců
+Struktura souboru:
+Sloupec Popis Datový typ Příklad
+id Identifikátor letu integer 25
+datum Datum letu date (DD-MM-YYYY) 09-05-2025
+typ Typ letadla string WT9
+imatrikulace Imatrikulace letadla string PUS19
+pilot Příjmení pilota string Houdek
+ukol Úkol letu string Prostor
+start Čas startu time (HH:mm) 16:57
+pristani Čas přistání time (HH:mm) 17:12
+doba Doba letu (2 des. místa) decimal 0.25
+pripojeno ID kluzáku u vleku, jinak null integer/null null
+3.2.3 Import letů (CSV)
+Systém umožňuje administrátorovi nahrát historická data hromadně prostřednictvím souboru
+CSV. Funkce je primárně určena pro jednorázovou migraci dat z papírové evidence.
+Technické parametry souboru: shodné s exportem (viz 3.2.2).
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 15
+Struktura souboru: shodná se strukturou exportního souboru. Pole id v importním souboru
+slouží výhradně pro propojení záznamu motorového letadla se záznamem kluzáku v rámci téhož
+souboru (prostřednictvím pole pripojeno). Po importu systém přidělí záznamům vlastní interní
+identifikátory.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 16
+4 Funkční požadavky
+4.1 Všichni uživatelé
+FR-01: Přihlášení uživatele
+Popis: Oba uživatelé se do aplikace přihlašují pomocí e-mailu a hesla.
+Vstup:
+Pole Formát Povinné Omezení
+E-mail string, funkční e-mail Ano Max. 254 znaků
+Heslo string Ano Min. 8, max. 128 znaků
+Chování:
+• Po úspěšném přihlášení je uživatel přesměrován na výchozí obrazovku odpovídající jeho
+roli
+• Systém rozlišuje přihlášeného uživatele a na základě jeho rolí zobrazí odpovídající
+rozhraní a funkce
+• Po neúspěšném přihlášení systém zobrazí obecnou chybovou hlášku „Neplatný e-mail
+nebo heslo." - systém nerozlišuje, zda je chybný e-mail nebo heslo
+• Přihlášený uživatel si může heslo změnit v nastavení účtu
+• Nepřihlášený uživatel může požádat o obnovu hesla
+Technická poznámka:
+• Autentizace je realizována pomocí session/tokenu spravovaného backendem.
+• Session expiruje po 30 minutách neaktivity uživatele.
+• Uživatel má možnost se ze systému odhlásit (logout).
+FR-02: Offline režim (PWA)
+Popis: Aplikace bude realizována jako Progressive Web App (PWA). V případě výpadku
+internetového připojení umožní pilotovi vyplnit záznam o letu v offline režimu. Po obnovení
+spojení se data automaticky synchronizují se serverem.
+Chování:
+• Pilot může v offline režimu vytvořit nový záznam o letu (FR-03) a vyplnit údaje po příletu
+(FR-05). Záznamy se uloží lokálně v zařízení
+• Po obnovení internetového připojení systém automaticky odešle lokálně uložené
+záznamy na server
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 17
+• Během offline režimu systém zobrazí vizuální indikátor, že aplikace pracuje bez připojení
+• Výběrové nabídky (imatrikulace, piloti) jsou v offline režimu dostupné z lokálně
+cachovaných dat
+4.2 Zapisovatel
+Zapisovatel je uživatel zodpovědný za zapisování informací o jednotlivých letech.
+FR-03: Vytvoření záznamu o letu
+Popis: Zapisovatel vytvoří nový záznam o letu vyplněním základních údajů o letu – spolu se
+startem letadla (letadel).
+Vstupy:
+Pole Formát Povinné Omezení
+Datum date (DD-MM-YYYY) Ano Výchozí: aktuální datum
+Jméno pilota string Ano max. 50 znaků
+Imatrikulace kluzáku string Ano max. 20 znaků
+Úkol string Ano max. 200 znaků
+Čas startu time (HH:mm) Ano Formát 24h
+Typ startu enum Ano Naviák, motorové letadlo
+Jméno pilota mot. letadla string Podmíněné max. 50 znaků
+Imatrikulace mot. letadla string Podmíněné max. 20 znaků
+Chování:
+• doplnění, zda je pilot (kluzáku i mot. letadla) členem klubu
+• validace času
+• dopočítání doby letu (Doba letu je počítána jako rozdíl času přistání a startu)
+• Pokud kontrola čehokoliv selže, u příslušného pole se zobrazí chybová hláška
+• Podmíněná pole je potřeba vyplnit v případě, že start je typu “motorové letadlo”
+FR-04: Doplnění přistání letadla
+Popis: Zapisovatel doplní informaci o přistání motorového letadla (kluzáku).
+Vstupy:
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 18
+Pole Formát Povinné Omezení
+Čas přistání time (HH:mm) Ano Formát 24h
+Chování:
+• Zapisovatel najde odpovídají let
+• Může udělat změny
+• Doplní čas přistání daného letadla
+4.4 Administrátor
+Administrátor je osoba odpovědná za správu a správnost zadaných údajů. Musí dohlédnout, že
+všechny záznamy jsou zadané v pořádku, případně je upravit. Administrátora určuje klient.
+FR-05: Přehled a filtrování letů
+Popis: Administrátor vidí tabulkový přehled všech letů (uskutečněných i naplánovaných).
+Tabulka:
+Sloupec Datový typ Popis
+Datum date (DD-MM-YYYY) Datum letu
+Druh letadla enum motorové / kluzák
+Typ letadla string Konkrétní typ
+Imatrikulace string Imatrikulace letadla
+Jméno pilota string Jméno a příjmení
+Úkol string Účel letu
+Čas startu time (HH:mm) Čas vzletu
+Čas přistání time (HH:mm) Čas přistání
+Doba letu decimal Doba v hodinách
+Chování:
+• Tabulka zobrazuje záznamy po stránkách. Uživatel může zvolit počet záznamů na jednu
+stránku (10, 25 nebo 50). Uživatel může přecházet mezi stránkami
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 19
+• V tabulce lze filtrovat podle sloupců: Datum, typ letadla, imatrikulace, čas startu, čas
+přistání, doba letu, nebo položky “Právě ve vzduchu”, která ukáže letadla, která jsou
+právě používaná
+FR-06: Export letů do CSV
+Popis: Administrátor může vyexportovat uskutečněné lety do souboru CSV. Export respektuje
+aktuálně nastavené filtry z přehledu letů (FR-04).
+Exportovaný CSV soubor používá středník jako oddělovač. Použité kódování je UTF-8 a první
+řádek je vždy hlavička, která obsahuje názvy jednotlivých sloupců.
+Struktura exportu je popsaná v sekci 3.2.2.
+Chování:
+• Řádky jsou seřazeny od nejnovějšího letu podle času vzletu (sestupně)
+• Pořadí sloupců odpovídá tabulce výše
+• Název souboru: flightlog_export_DD-MM-YYYY.csv (datum exportu)
+• Při velkém objemu dat (1000+ záznamů) systém export provede na pozadí a nabídne
+soubor ke stažení po dokončení
+FR-07: Import letů z CSV
+Popis: Administrátor může importovat záznamy o letech ze souboru CSV. Funkce slouží primárně
+pro migraci historických dat z papírové evidence.
+Struktura importu: Struktura importu je popsána v sekci 3.2.3.
+Chování:
+• Systém soubor nejprve zvaliduje celý, než cokoliv uloží
+• Validace: správnost formátu všech polí, existence odkazovaných ID (sloupec pripojeno),
+konzistence časů (přistání po startu)
+• Po validaci systém zobrazí souhrn: počet záznamů k importu, nalezené chyby (číslo řádku
++ popis chyby)
+• Administrátor potvrdí import. Importované záznamy mají stav dokončený
+• Sloupec id ze souboru se nepoužívá jako ID v databázi - slouží pouze k propojení
+záznamů v rámci souboru (vazba pripojeno)
+FR-08: Ruční zadávání letů
+Popis: Administrátor může ručně vytvořit záznam o letu prostřednictvím webového formuláře.
+Funkce slouží pro zpětný přepis historických záznamů z papírové evidence (alternativa k
+hromadnému importu z CSV dle FR-06). Toto funkcionalita je stejná jako FR-03.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 20
+FR-09: Zpětná editace záznamů
+Popis: Administrátor může zpětně upravovat záznamy letů, které již byly potvrzeny pilotem (stav
+dokončený).
+Formulář: Vizte strukturu pro ruční zadávání letů, FR-03.
+Chování:
+• Při editaci se uplatňují stejné validace jako při vytváření záznamu (FR-02, FR-03)
+• Systém automaticky přepočítá dobu letu při změně času
+• Systém zaznamená do logu, kdo a kdy úpravu provedl
+• Přístup k této funkci je omezen na uživatele s rolí administrátor na úrovni backendu
+FR-10: Mazání záznamů
+Popis: Administrátor může smazat libovolný záznam o letu.
+Chování:
+• Před smazáním systém zobrazí potvrzovací dialog s detaily smazaného záznamu
+• Pokud je mazaný záznam propojen s jiným letem (vlek kluzáku ↔ motorové letadlo),
+systém na tuto vazbu upozorní. Administrátor rozhodne, zda smazat i provázaný záznam,
+nebo pouze zrušit vazbu
+• Smazání je nevratné
+• Informace o smazaném záznamu se uchová v logu systémů
+FR-11: Integrace s API pilotů
+Popis: Systém udržuje evidenci letadel, která mohou být použita v záznamech letů.
+Chování:
+• Při zadávání letu (FR-02) systém nabízí výběr pouze z letadel evidovaných v systému
+• V systému jsou evidována pouze lehká letadla (kluzáky a lehká motorová letadla), která
+patří k danému letišti
+• Systém interně rozlišuje kategorii letadla (kluzák / motorové)
+• Typ letadla je automaticky doplněn na základě imatrikulace
+• Správa seznamu letadel (přidání, odebrání, úprava) je v kompetenci administrátora
+FR-12: Kontrola pilotů
+Popis: Systém komunikuje s externím API pilotů pro získávání informace, zda je pilot členem
+klubu.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 21
+Chování:
+• Systém se dotazuje API pilotů při vytváření záznamu o letu a při načítání seznamu pilotů
+do výběrových nabídek
+• Komunikace: REST, formát JSON
+• Timeout pro požadavek: 15 sekund (zákazníkem potvrzeno, že odezva může být až 10 s)
+Řešení nedostupnosti:
+• Pokud API neodpoví nebo vrátí chybu, systém provede 2 opakované pokusy (s odstupem
+2 s a 5 s)
+• Pokud ani opakované pokusy neuspějí, systém přejde na data z dlouhodobé cache
+• Krátkodobá cache - poskytuje zmírnění zátěže při běžném provozu, rychlejší obsloužení
+• Dlouhodobá cache - záložní zdroj data, aktualizuje se při každém úspěšném dotazu na
+API
+RF-13: Správa uživatelů
+Správu uživatelů (přidání, úprava a smazání uživatelských účtů) zajišťuje dodavatel na základě
+vyžádání zadavatele, a to nejvýše 5× ročně v rámci záruční podpory. Aplikace neobsahuje
+rozhraní pro samostatnou správu uživatelů ze strany zadavatele.
+4.5 Změny oproti nabídce
+4.5.1 Změna zaznamenávání letu
+Na základě schůzky dne 11. 3. 2026: role pilota kluzáku a pilota motorového letadla byly
+nahrazeny rolí zapisovatele – jedné dedikované osoby spravující všechny záznamy. Piloti nemají
+přístup do systému.
+4.5.2 Změna správy uživatelů a rolí
+Tři role (pilot kluzáku, pilot motorového letadla, administrátor) byly redukovány na dvě:
+• Zapisovatel – přebírá obě pilotní role; zadává a spravuje záznamy.
+• Administrátor – správa dat, export/import, přehled letů.
+Správa účtů je výlučně na straně dodavatele (viz FR-15). Uživatel si může sám změnit nebo
+obnovit heslo.
+4.5.2 Odstranění validace imatrikulací letadel
+Odstranili jsme autoamtickou validaci imatrikulací letadel a jejich zobrazení v rolovací nabídce.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 22
+5 Nefunkční požadavky
+Tato kapitola definuje nefunkční požadavky na aplikaci FlightLog, které popisují kvalitativní
+vlastnosti systému, jako je výkon, dostupnost, bezpečnost, použitelnost a spolehlivost. Tyto
+požadavky doplňují funkční specifikaci a určují, jakým způsobem musí systém fungovat.
+NFR-01: Dostupnost systému
+Popis: Systém musí být dostupný uživatelům prostřednictvím webového prohlížeče bez nutnosti
+instalace.
+Kritéria:
+• Aplikace je dostupná 24/7 s cílovou dostupností min. 99 % měsíčně (mimo plánované
+odstávky).
+• Plánované odstávky musí být oznámeny předem (min. 24 hodin).
+• Dostupnost je měřena jako procento úspěšných HTTP odpovědí (status kód < 500) vůči
+celkovému počtu požadavků za sledované období.
+• Do dostupnosti se nezapočítávají předem oznámené odstávky.
+NFR-02: Výkon a odezva systému
+Popis: Systém musí reagovat na běžné uživatelské operace v přijatelném čase.
+Kritéria:
+• 95 % běžných operací (zobrazení dashboardu, uložení záznamu) má odezvu do 2 sekund.
+• 99 % operací má odezvu do 5 sekund.
+• Výjimkou jsou operace závislé na externím API pilotů.
+• Měření odezvy se vztahuje na backend API (bez vlivu výkonu klientského zařízení a sítě
+uživatele).
+NFR-03: Chování při pomalém nebo nedostupném API pilotů
+Popis: Systém musí zůstat použitelný i při pomalé odezvě externího API.
+Kritéria:
+• Timeout pro API volání je 15 sekund (viz FR-13).
+• Po vyčerpání retry mechanismu systém použije data z cache.
+• Uživatel je informován o degradovaném režimu (např. hláškou „Data nemusí být
+aktuální“).
+• Tento režim je označován jako „degradovaný online režim“ (na rozdíl od plně offline
+režimu dle NFR-04).
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 23
+NFR-04: Offline režim a synchronizace
+Popis: Aplikace musí umožnit práci bez připojení k internetu.
+Kritéria:
+• Uživatel může vytvořit a upravit záznam letu v offline režimu.
+• Data jsou uložena lokálně.
+• Synchronizace proběhne automaticky do 5 sekund od obnovení připojení.
+• Konflikty při synchronizaci jsou řešeny strategií „last write wins“, kde server je
+autoritativní.
+• V případě konfliktní synchronizace je uživatel informován o přepsání dat.
+NFR-05: Bezpečnost komunikace
+Popis: Veškerá komunikace musí být zabezpečená.
+Kritéria:
+• Veškerá komunikace probíhá přes HTTPS (TLS 1.2+).
+• Nešifrované připojení (HTTP) není podporováno.
+NFR-06: Bezpečnost uživatelských účtů
+Popis: Systém musí chránit přihlašovací údaje uživatelů.
+Kritéria:
+• Hesla jsou ukládána jako hash (bcrypt nebo argon2).
+• Po 3 neúspěšných pokusech o přihlášení je aktivována ochrana (např. CAPTCHA).
+• Reset hesla probíhá přes jednorázový token s omezenou platností (max. 24 hodin).
+NFR-07: Řízení přístupu
+Popis: Přístup k funkcím musí být omezen dle role uživatele.
+Kritéria:
+• Oprávnění jsou kontrolována na backendu.
+• Klientská aplikace nesmí být jediným zdrojem rozhodnutí o oprávnění.
+• Neautorizovaný přístup vrací HTTP 403.
+NFR-08: Integrita a konzistence dat
+Popis: Systém musí zajistit správnost a konzistenci dat.
+Kritéria:
+• Databáze používá transakce pro zápis kritických operací.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 24
+• Databáze využívá referenční integritu (foreign key constraints) pro zajištění vazeb mezi
+entitami.
+• Systém zabraňuje duplicitním záznamům letů (viz FR-11).
+• Všechny povinné vstupy jsou validovány před uložením.
+NFR-09: Audit a logování
+Popis: Systém musí umožnit dohledání změn a operací.
+Kritéria:
+• Logují se akce
+• Vytvoření záznamu
+• Editace záznamu
+• Smazání záznamu
+• Přihlášení uživatele
+• Log obsahuje:
+• Identifikátor uživatele
+• Čas
+• Typ operace.
+• Logy jsou uchovávány minimálně 12 měsíců.
+• Logy jsou kategorizovány minimálně na úrovně INFO, WARN a ERROR.
+• Přístup k logům je omezen pouze na administrátory systému.
+NFR-10: Použitelnost
+Popis: Aplikace musí být snadno použitelná i v terénu.
+Kritéria:
+• Záznam letu před odletem je možné provést maximálně na 3 interakce.
+• Nový uživatel musí být schopen vytvořit první záznam letu do 2 minut bez nutnosti
+školení.
+• Míra chyb při vyplňování formuláře musí být nižší než 5 % (měřeno na validacích
+formuláře).
+• Rozhraní používá vysoký kontrast (pro lepší čitelnost na slunci).
+• Ovládací prvky mají minimální velikost 44×44 px (pro příjemnější zážitek na mobilních
+zařízeních).
+NFR-11: Kompatibilita zařízení a prohlížečů
+Popis: Aplikace musí fungovat na definovaných platformách.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 25
+Kritéria:
+• Podporované prohlížeče (poslední 2 verze):
+• Chrome
+• Firefox
+• Edge
+• Safari
+• Mobilní OS:
+• Android 10+
+• iOS 15+.
+• Minimální rozlišení:
+• mobil: 360×640 px
+• desktop: 1280×720 px
+NFR-12: Škálovatelnost
+Popis: Systém musí být připraven na růst počtu uživatelů a dat.
+Kritéria:
+• Systém musí podporovat horizontální škálování bez nutnosti změny aplikační logiky.
+• Systém zvládne minimálně 100 současně aktivních uživatelů bez degradace výkonu.
+NFR-13: Zálohování a obnova dat
+Popis: Systém musí chránit data proti ztrátě.
+Kritéria:
+• Záloha databáze probíhá minimálně 1x denně.
+• Obnova dat (RTO) max. 24 hodin.
+• Maximální ztráta dat (RPO) max. 24 hodin.
+• Zálohy jsou ukládány v geograficky oddělené lokalitě.
+NFR-14: Lokalizace a formát dat
+Popis: Systém musí používat konzistentní formáty.
+Kritéria:
+• Datum: DD-MM-YYYY
+• Čas: HH:mm (24h)
+• Číselné hodnoty: desetinná tečka
+• Kódování: UTF-8
+NFR-15: Chybové stavy a UX
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 26
+Popis: Systém musí srozumitelně informovat o chybách.
+Kritéria:
+• Chyby validace jsou zobrazeny přímo u pole.
+• Systém nepoužívá technické hlášky (např. stack trace).
+• Kritické chyby jsou logovány na backendu.
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 27
+Příloha A – Slovník pojmů a seznam zkratek
+A.1 Pojmy
+Pojem Význam
+Administrátor Role s přístupen k správě dat, uživatelů a importu/exportu.
+Akceptace Formální převzetí dodávky po splnění akceptančních kritérií.
+Cache Dochčasné úložiště dat z externího API pro zrychlení odezvy.
+Imatrikulace Identifikační označení letadla (např. OK-1234, PUS19).
+Kluzák Bezmotorové letadlo startující naviákem nebo vlekem.
+Vlek Start kluzáku tažením motorovým letadlem.
+Zapisovatel Role zodpovědná za zápis letů; nahrazuje původní pilotní role.
+Záznam letu Datová entita reprezentující jeden let v systému FlightLog.
+Zadavatel Provozovatel letiště, který si aplikaci objednává.
+Záruční kapacita Vyhrazené 3 MD pro odstranění vad v záruční době.
+A.2 Zkratky
+Zkratka Význam
+API Application Programming Interface
+CSV Comma-Separated Values – textový formát pro tabulková data
+FR Functional Requirement – funkční požadavek
+HTTPS Hypertext Transfer Protocol Secure
+JSON JavaScript Object Notation
+MD Man-Day – člověkoden
+NFR Non-Functional Requirement – nefunkční požadavek
+PWA Progressive Web App
+REST Representational State Transfer
+RPO Recovery Point Objective – maximální přípustná ztráta dat
+Specifikace požadavků – FlightLog
+Tým A | v1.0 | str. 28
+RTO Recovery Time Objective – maximální přípustná doba obnovy
+SRS Software Requirements Specification
+UAT User Acceptance Testing – akceptanční testování
+UTF-8 Unicode Transformation Format 8-bit
+UX User Experience
