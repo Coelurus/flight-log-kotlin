@@ -1,6 +1,6 @@
 # Flight Log (Kotlin / Spring Boot)
 
-Kotlin port of the original ASP.NET project located in [`../flight-log-dotnet/`](../flight-log-dotnet/).
+Flight log management system for glider clubs. Tracks takeoffs, landings, pilots, and aircraft, with CSV import/export, an admin dashboard, and a PWA-capable writer interface.
 
 ## Stack
 
@@ -25,15 +25,13 @@ Set `DB_URL`, `DB_USER`, `DB_PASSWORD` env vars to point at your PostgreSQL inst
 
 ## Endpoints
 
-Same routes as the .NET version:
-
 - `GET /airplane` — club airplanes
 - `GET /user` — club members
-- `GET /flight/InAir` — airplanes currently in air *(stub — TODO 2.5)*
+- `GET /flight/InAir` — airplanes currently in air
 - `POST /flight/Land` — land a flight
 - `POST /flight/Takeoff` — take off
 - `GET /flight/Report` — report
-- `GET /flight/Export` — CSV export *(stub — TODO 5.1)*
+- `GET /flight/Export` — CSV export
 
 ## PWA
 
@@ -43,8 +41,8 @@ The backend serves PWA assets:
 - `GET /service-worker.js` (served with `Cache-Control: no-store`)
 - `GET /pwa-register.js`
 
-To enable PWA in the existing Aurelia frontend (kept untouched in
-`../frontend/`), add these two lines to `frontend/index.ejs` inside `<head>`:
+To enable PWA in the Aurelia frontend (`../frontend/`), add these two lines to
+`frontend/index.ejs` inside `<head>`:
 
 ```html
 <link rel="manifest" href="/manifest.webmanifest">
@@ -55,27 +53,13 @@ Then build the frontend and copy its dist contents into
 `src/main/resources/static/` (replacing the placeholder `index.html`). You also need
 `/icons/icon-192.png` and `/icons/icon-512.png` for the manifest to validate.
 
-## Layout (mirrors the C# project)
+## Package layout
 
-| C# namespace | Kotlin package |
+| Package | Responsibility |
 | --- | --- |
-| `FlightLogNet.Controllers` | `eu.profinit.flightlog.controller` |
-| `FlightLogNet.Facades` | `eu.profinit.flightlog.facade` |
-| `FlightLogNet.Operation` | `eu.profinit.flightlog.operation` |
-| `FlightLogNet.Models` | `eu.profinit.flightlog.model` |
-| `FlightLogNet.Integration` | `eu.profinit.flightlog.integration` |
-| `FlightLogNet.Repositories` | `eu.profinit.flightlog.repository` (+ `.impl`, `.entity`, `.jpa`) |
-
-## Mapping notes
-
-- `IConfiguration` → Spring `@Value` / `application.yml`
-- EF Core `DbContext` → Spring Data JPA repositories under `repository/jpa/`
-- `bool TryGet(..., out long id)` → returns `TryGetResult(found, id)`
-- `IServiceCollection.AddScoped(...)` → `@Component` / `@Repository` (Spring scans
-  the `eu.profinit.flightlog` package automatically).
-- `RestSharp` → Spring `RestClient`
-- `log4net` → Logback (`logback-spring.xml`)
-- `Microsoft.EntityFrameworkCore.Sqlite` is dropped per project decision (PostgreSQL only).
-
-The original `// TODO X.Y` teaching markers are preserved verbatim in the corresponding
-Kotlin files so the tutorial flow still works.
+| `eu.profinit.flightlog.controller` | HTTP controllers (REST + MVC) |
+| `eu.profinit.flightlog.facade` | Orchestration / use-case facades |
+| `eu.profinit.flightlog.operation` | Business logic operations |
+| `eu.profinit.flightlog.model` | Request / response models |
+| `eu.profinit.flightlog.integration` | External service clients (ClubDB) |
+| `eu.profinit.flightlog.repository` | Data access (+ `.impl`, `.entity`, `.jpa`) |
